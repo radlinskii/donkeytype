@@ -1,3 +1,7 @@
+mod cli;
+
+use cli::print::print_hello;
+
 fn main() {
-    println!("Hello, world!");
+    print_hello();
 }
