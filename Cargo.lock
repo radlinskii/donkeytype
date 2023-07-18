@@ -144,7 +144,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "donkey-type"
+name = "donkeytype"
 version = "0.1.0"
 dependencies = [
  "clap",

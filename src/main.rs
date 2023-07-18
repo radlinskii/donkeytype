@@ -4,7 +4,7 @@ use clap::Parser;
 use cli::print::print_hello;
 use dirs;
 
-use std::fs::File;
+use std::fs::{self, File};
 use std::io::{self, BufRead};
 use std::path::Path;
 
@@ -27,15 +27,15 @@ fn main() {
     let args = Args::parse();
 
     let home_dir = dirs::home_dir().unwrap();
-    let donkey_type_config_dir = home_dir
+    let config_file = home_dir
         .join(".config")
-        .join("donkey-type")
-        .join("donkey-type.lua");
+        .join("donkeytype")
+        .join("donkeytype-config.json");
 
-    if !donkey_type_config_dir.exists() {
-        println!("Donkey Type config directory does not exist");
+    if !config_file.exists() {
+        println!("Donkeytype config file does not exist");
     } else {
-        println!("Donkey Type config directory exists");
+        println!("Donkeytype config file exists");
     }
 
     for _ in 0..args.count {
