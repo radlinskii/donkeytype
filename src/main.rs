@@ -1,66 +1,7 @@
-mod cli;
-
-use clap::Parser;
-use cli::print::print_hello;
-use dirs;
-
-use std::fs::{self, File};
-use std::io::{self, BufRead};
-use std::path::Path;
-
-/// Simple program to greet a person
-#[derive(Parser, Debug)]
-#[command(author, version, about, long_about = None)]
-struct Args {
-    /// Name of the person to greet
-    #[arg(short, long)]
-    name: String,
-
-    /// Number of times to greet
-    #[arg(short, long, default_value_t = 1)]
-    count: u8,
-}
+mod config;
 
 fn main() {
-    print_hello();
+    let config = config::Config::new();
 
-    let args = Args::parse();
-
-    let home_dir = dirs::home_dir().unwrap();
-    let config_file = home_dir
-        .join(".config")
-        .join("donkeytype")
-        .join("donkeytype-config.json");
-
-    if !config_file.exists() {
-        println!("Donkeytype config file does not exist");
-    } else {
-        println!("Donkeytype config file exists");
-    }
-
-    for _ in 0..args.count {
-        println!("Hello {}!", args.name);
-
-        println!("Your home directory is: {}", home_dir.display());
-    }
-
-    // File hosts.txt must exist in the current path
-    if let Ok(lines) = read_lines(donkey_type_config_dir) {
-        // Consumes the iterator, returns an (Optional) String
-        for line in lines {
-            if let Ok(ip) = line {
-                println!("{}", ip);
-            }
-        }
-    }
-}
-
-// The output is wrapped in a Result to allow matching on errors
-// Returns an Iterator to the Reader of the lines of the file.
-fn read_lines<P>(filename: P) -> io::Result<io::Lines<io::BufReader<File>>>
-where
-    P: AsRef<Path>,
-{
-    let file = File::open(filename)?;
-    Ok(io::BufReader::new(file).lines())
+    println!("config = {:?}", config);
 }
