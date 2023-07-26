@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use clap::Parser;
 use dirs;
 
-use std::fs::{self};
+use std::fs;
 
 const DEFAULT_CONFIG: Config = Config {
     duration: 30,
@@ -18,18 +18,12 @@ struct Args {
     #[arg(short, long)]
     duration: Option<u16>,
 
-    /// Should test include numbers
+    /// indicates if test should include numbers
     #[arg(short, long)]
     numbers: Option<bool>,
 }
 
 #[derive(Deserialize, Serialize, Debug)]
-struct FileConfig {
-    pub duration: u16,
-    pub numbers: bool,
-}
-
-#[derive(Serialize, Debug)]
 pub struct Config {
     pub duration: u16,
     pub numbers: bool,
@@ -58,7 +52,7 @@ impl Config {
         } else {
             let config_file_content = fs::read_to_string(config_file).expect("Unable to read file");
 
-            let config_from_file: FileConfig =
+            let config_from_file: Config =
                 serde_json::from_str(&config_file_content).expect("Unable to parse config file");
 
             config.duration = config_from_file.duration;
@@ -88,5 +82,18 @@ impl Config {
         };
 
         config
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::config;
+
+    #[test]
+    fn new() {
+        let config = config::Config::new();
+
+        assert_eq!(config.duration, 30);
+        assert_eq!(config.numbers, false);
     }
 }

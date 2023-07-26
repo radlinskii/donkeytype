@@ -17,7 +17,7 @@ impl<'a> Runner<'a> {
         };
     }
 
-    pub fn check_if_correct_char(&self, c: char) -> bool {
+    fn check_if_correct_char(&self, c: char) -> bool {
         return c
             == self
                 .expected_input
@@ -29,7 +29,9 @@ impl<'a> Runner<'a> {
 
     pub fn run(&mut self) {
         // Create a raw terminal instance
-        let mut stdout = io::stdout().into_raw_mode().unwrap();
+        let mut stdout = io::stdout()
+            .into_raw_mode()
+            .expect("Unable to get stdout into raw terminal");
         let stdin = io::stdin();
         // Get the initial cursor position
         let (column, row) = stdout.cursor_pos().unwrap();
