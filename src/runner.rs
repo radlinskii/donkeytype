@@ -88,6 +88,44 @@ impl<'a> Runner<'a> {
                     );
                     stdout.flush().unwrap();
                 }
+                Key::Alt(c) => {
+                    // on alt + backspace delete current word
+                    if c == '\x7F' {
+                        let mut chars_to_delete = 0;
+                        let mut found_non_space_char = false;
+                        for c in self.actual_input.chars().rev() {
+                            if c == ' ' && found_non_space_char {
+                                break;
+                            } else {
+                                found_non_space_char = true;
+                            }
+                            chars_to_delete += 1;
+                        }
+
+                        for _ in 0..chars_to_delete {
+                            print!("{}", termion::cursor::Left(1));
+                            self.actual_input.pop();
+                            print!("{}", termion::clear::AfterCursor);
+                        }
+
+                        print!(
+                            "{}",
+                            &self.expected_input.to_str()[self.actual_input.len()..]
+                        );
+
+                        print!(
+                            "{}",
+                            termion::cursor::Left(
+                                self.expected_input.to_str()[self.actual_input.len()..]
+                                    .len()
+                                    .try_into()
+                                    .unwrap()
+                            )
+                        );
+
+                        stdout.flush().unwrap();
+                    }
+                }
                 Key::Ctrl('c') => {
                     break; // Exit the loop when the user presses Ctrl+C
                 }
