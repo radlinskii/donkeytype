@@ -1,6 +1,12 @@
 use crate::{config::Config, expected_input::ExpectedInput};
-use std::io::{self, Write};
-use termion::{color, cursor::DetectCursorPos, event::Key, input::TermRead, raw::IntoRawMode};
+use std::io::{self, Stdout, Write};
+use termion::{
+    color,
+    cursor::DetectCursorPos,
+    event::Key,
+    input::TermRead,
+    raw::{IntoRawMode, RawTerminal},
+};
 
 pub struct Runner<'a> {
     expected_input: ExpectedInput<'a>,
@@ -27,6 +33,25 @@ impl<'a> Runner<'a> {
                 .unwrap();
     }
 
+    fn print_rest_of_expected_input(&self, stdout: &mut RawTerminal<Stdout>) {
+        print!(
+            "{}",
+            &self.expected_input.to_str()[self.actual_input.len()..]
+        );
+
+        print!(
+            "{}",
+            termion::cursor::Left(
+                self.expected_input.to_str()[self.actual_input.len()..]
+                    .len()
+                    .try_into()
+                    .unwrap()
+            )
+        );
+
+        stdout.flush().unwrap();
+    }
+
     pub fn run(&mut self) {
         // Create a raw terminal instance
         let mut stdout = io::stdout()
@@ -47,10 +72,11 @@ impl<'a> Runner<'a> {
         write!(stdout, "{}", termion::cursor::Goto(column, row)).unwrap();
         stdout.flush().unwrap();
 
-        // Start a non-blocking input loops
+        // Start a non-blocking input loop
         for key in stdin.keys() {
             match key.unwrap() {
                 Key::Char(c) => {
+                    // handle characters
                     if self.ignored_chars.contains(&c) {
                         continue;
                     }
@@ -67,29 +93,15 @@ impl<'a> Runner<'a> {
                     self.actual_input.push(c);
                 }
                 Key::Backspace => {
-                    // Move the cursor back one space
+                    // on Backspace remove the last character
                     print!("{}", termion::cursor::Left(1));
                     self.actual_input.pop();
                     print!("{}", termion::clear::AfterCursor);
 
-                    print!(
-                        "{}",
-                        &self.expected_input.to_str()[self.actual_input.len()..]
-                    );
-
-                    print!(
-                        "{}",
-                        termion::cursor::Left(
-                            self.expected_input.to_str()[self.actual_input.len()..]
-                                .len()
-                                .try_into()
-                                .unwrap()
-                        )
-                    );
-                    stdout.flush().unwrap();
+                    self.print_rest_of_expected_input(&mut stdout)
                 }
                 Key::Alt(c) => {
-                    // on alt + backspace delete current word
+                    // on Alt+Backspace delete the current word
                     if c == '\x7F' {
                         let mut chars_to_delete = 0;
                         let mut found_non_space_char = false;
@@ -108,26 +120,12 @@ impl<'a> Runner<'a> {
                             print!("{}", termion::clear::AfterCursor);
                         }
 
-                        print!(
-                            "{}",
-                            &self.expected_input.to_str()[self.actual_input.len()..]
-                        );
-
-                        print!(
-                            "{}",
-                            termion::cursor::Left(
-                                self.expected_input.to_str()[self.actual_input.len()..]
-                                    .len()
-                                    .try_into()
-                                    .unwrap()
-                            )
-                        );
-
-                        stdout.flush().unwrap();
+                        self.print_rest_of_expected_input(&mut stdout)
                     }
                 }
                 Key::Ctrl('c') => {
-                    break; // Exit the loop when the user presses Ctrl+C
+                    // on Ctrl+C exit the loop when the user presses
+                    break;
                 }
                 _ => {}
             }
