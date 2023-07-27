@@ -1,0 +1,14 @@
+use clap::Parser;
+
+/// cli typing test
+#[derive(Parser, Debug)]
+#[command(author, version, about, long_about = None)]
+pub struct Args {
+    /// duration of the test in seconds
+    #[arg(short, long)]
+    pub duration: Option<u16>,
+
+    /// indicates if test should include numbers
+    #[arg(short, long)]
+    pub numbers: Option<bool>,
+}

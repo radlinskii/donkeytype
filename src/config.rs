@@ -1,27 +1,13 @@
+use crate::Args;
+use mockall::*;
 use serde::{Deserialize, Serialize};
 
-use clap::Parser;
-use dirs;
-
-use std::fs;
+use std::{fs, io::Read, path::PathBuf};
 
 const DEFAULT_CONFIG: Config = Config {
     duration: 30,
     numbers: false,
 };
-
-/// cli typing test
-#[derive(Parser, Debug)]
-#[command(author, version, about, long_about = None)]
-struct Args {
-    /// duration of the test in seconds
-    #[arg(short, long)]
-    duration: Option<u16>,
-
-    /// indicates if test should include numbers
-    #[arg(short, long)]
-    numbers: Option<bool>,
-}
 
 #[derive(Deserialize, Serialize, Debug)]
 pub struct Config {
@@ -29,28 +15,30 @@ pub struct Config {
     pub numbers: bool,
 }
 
+#[automock]
 impl Config {
-    fn augment_config_with_config_file(config: &mut Config) {
-        let home_dir = dirs::home_dir().unwrap();
-        let config_file = home_dir
-            .join(".config")
-            .join("donkeytype")
-            .join("donkeytype-config.json");
+    pub fn new(args: Args, config_file_path: PathBuf) -> Config {
+        let config = {
+            let mut config = DEFAULT_CONFIG;
 
-        if !config_file.exists() {
-            fs::create_dir_all(config_file.parent().unwrap()).unwrap();
-            serde_json::to_writer_pretty(
-                fs::File::create(&config_file).expect("Unable to create file"),
-                &DEFAULT_CONFIG,
-            )
-            .expect("Unable to write config file");
+            let config_file = Self::open_config_file_if_exists(config_file_path.clone());
+            if let Some(config_file) = config_file {
+                Self::augment_config_with_config_file(&mut config, config_file);
+            }
+            Self::augment_config_with_args(&mut config, args);
 
-            println!(
-                "Created config file with default values at {:?}",
-                config_file
-            );
-        } else {
-            let config_file_content = fs::read_to_string(config_file).expect("Unable to read file");
+            config
+        };
+
+        config
+    }
+
+    fn augment_config_with_config_file(config: &mut Config, mut config_file: fs::File) {
+        if config_file.metadata().is_ok() {
+            let mut config_file_content = String::new();
+            config_file
+                .read_to_string(&mut config_file_content)
+                .expect("Unable to read file");
 
             let config_from_file: Config =
                 serde_json::from_str(&config_file_content).expect("Unable to parse config file");
@@ -60,9 +48,16 @@ impl Config {
         }
     }
 
-    fn augment_config_with_args(config: &mut Config) {
-        let args = Args::parse();
+    fn open_config_file_if_exists(config_file: PathBuf) -> Option<fs::File> {
+        if config_file.exists() {
+            let config_file = fs::File::open(config_file).expect("Unable to open config file");
+            return Some(config_file);
+        }
 
+        return None;
+    }
+
+    fn augment_config_with_args(config: &mut Config, args: Args) {
         if let Some(numbers_flag) = args.numbers {
             config.numbers = numbers_flag;
         }
@@ -70,30 +65,71 @@ impl Config {
             config.duration = duration;
         }
     }
-
-    pub fn new() -> Config {
-        let config = {
-            let mut config = DEFAULT_CONFIG;
-
-            Self::augment_config_with_config_file(&mut config);
-            Self::augment_config_with_args(&mut config);
-
-            config
-        };
-
-        config
-    }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::config;
+    use std::io::Write;
+
+    use super::*;
 
     #[test]
-    fn new() {
-        let config = config::Config::new();
+    fn should_create_new_with_default_values() {
+        let args = Args {
+            duration: None,
+            numbers: None,
+        };
+        let config = Config::new(args, PathBuf::new());
 
-        assert_eq!(config.duration, 30);
+        assert_eq!(DEFAULT_CONFIG.duration, 30);
+        assert_eq!(config.duration, DEFAULT_CONFIG.duration);
+        assert_eq!(DEFAULT_CONFIG.numbers, false);
+        assert_eq!(config.numbers, DEFAULT_CONFIG.numbers);
+    }
+
+    #[test]
+    fn should_create_new_config_with_config_file_values() {
+        let mut config_file = tempfile::NamedTempFile::new().unwrap();
+        config_file
+            .write_all(r#"{"duration": 10, "numbers": true }"#.as_bytes())
+            .unwrap();
+
+        let args = Args {
+            duration: None,
+            numbers: None,
+        };
+        let config = Config::new(args, config_file.path().to_path_buf());
+
+        assert_eq!(config.duration, 10);
+        assert_eq!(config.numbers, true);
+    }
+
+    #[test]
+    fn should_create_new_with_argument_values() {
+        let args = Args {
+            duration: Some(10),
+            numbers: Some(true),
+        };
+        let config = Config::new(args, PathBuf::new());
+
+        assert_eq!(config.duration, 10);
+        assert_eq!(config.numbers, true);
+    }
+
+    #[test]
+    fn args_should_take_precedence_over_config_file() {
+        let mut config_file = tempfile::NamedTempFile::new().unwrap();
+        config_file
+            .write_all(r#"{"duration": 10, "numbers": true }"#.as_bytes())
+            .unwrap();
+
+        let args = Args {
+            duration: Some(20),
+            numbers: Some(false),
+        };
+        let config = Config::new(args, config_file.path().to_path_buf());
+
+        assert_eq!(config.duration, 20);
         assert_eq!(config.numbers, false);
     }
 }

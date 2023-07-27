@@ -1,4 +1,4 @@
-use crate::expected_input::ExpectedInput;
+use crate::{config::Config, expected_input::ExpectedInput};
 use std::io::{self, Write};
 use termion::{color, cursor::DetectCursorPos, event::Key, input::TermRead, raw::IntoRawMode};
 
@@ -9,7 +9,7 @@ pub struct Runner<'a> {
 }
 
 impl<'a> Runner<'a> {
-    pub fn new(expected_input: ExpectedInput) -> Runner {
+    pub fn new(_config: Config, expected_input: ExpectedInput) -> Runner {
         return Runner {
             expected_input: expected_input,
             actual_input: String::new(),

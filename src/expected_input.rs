@@ -1,10 +1,10 @@
-use crate::config;
+use crate::config::Config;
 
 #[derive(Debug)]
 pub struct ExpectedInput<'a>(&'a str);
 
 impl<'a> ExpectedInput<'a> {
-    pub fn new(_config: config::Config) -> ExpectedInput<'a> {
+    pub fn new(_config: &Config) -> ExpectedInput<'a> {
         let expected_input_str = "hello world";
 
         return ExpectedInput(expected_input_str);
@@ -17,15 +17,15 @@ impl<'a> ExpectedInput<'a> {
 
 #[cfg(test)]
 mod tests {
-    use crate::config;
-    use crate::expected_input;
+    use super::*;
 
     #[test]
-    fn to_str() {
-        let expected_input = expected_input::ExpectedInput::new(config::Config {
+    fn new_expected_input_should_correctly_convert_to_str() {
+        let config = Config {
             duration: 30,
             numbers: false,
-        });
+        };
+        let expected_input = ExpectedInput::new(&config);
 
         assert_eq!(expected_input.to_str(), "hello world");
     }
