@@ -1,17 +1,15 @@
 use crate::config::Config;
 
 #[derive(Debug)]
-pub struct ExpectedInput<'a>(&'a str);
+pub struct ExpectedInput {}
 
-impl<'a> ExpectedInput<'a> {
-    pub fn new(_config: &Config) -> ExpectedInput<'a> {
-        let expected_input_str = "hello world";
-
-        return ExpectedInput(expected_input_str);
+impl ExpectedInput {
+    pub fn new(_config: &Config) -> ExpectedInput {
+        return ExpectedInput {};
     }
 
-    pub fn to_str(&self) -> &str {
-        return self.0;
+    pub fn to_string(&self) -> String {
+        return String::from("hello world ");
     }
 }
 
@@ -27,6 +25,6 @@ mod tests {
         };
         let expected_input = ExpectedInput::new(&config);
 
-        assert_eq!(expected_input.to_str(), "hello world");
+        assert_eq!(expected_input.to_string(), "hello world ");
     }
 }
