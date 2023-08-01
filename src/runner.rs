@@ -11,27 +11,27 @@ use tui::{
 };
 
 use crate::config::Config;
-use crate::expected_input::ExpectedInputTrait;
+use crate::expected_input::ExpectedInputInterface;
 
 enum InputMode {
     Normal,
     Editing,
 }
 
-pub struct Runner<T: ExpectedInputTrait> {
+pub struct Runner {
     input: String,
     input_mode: InputMode,
     config: Config,
-    expected_input: T,
+    expected_input: Box<dyn ExpectedInputInterface>,
 }
 
-impl<T: ExpectedInputTrait> Runner<T> {
-    pub fn new(config: Config, expected_input: T) -> Runner<T> {
-        Runner {
+impl Runner {
+    pub fn new(config: Config, expected_input: impl ExpectedInputInterface + 'static) -> Self {
+        Self {
             input: String::new(),
             input_mode: InputMode::Normal,
             config,
-            expected_input,
+            expected_input: Box::new(expected_input),
         }
     }
 
@@ -134,7 +134,17 @@ impl<T: ExpectedInputTrait> Runner<T> {
             current_line_index,
         );
 
-        self.print_help_message(frame, help_area);
+        let help_message = match self.input_mode {
+            InputMode::Normal => "press 'e' to start editing, press 'q' to quit",
+            InputMode::Editing => "press 'Esc' to stop editing",
+        };
+        self.print_block_of_text(
+            frame,
+            help_message.to_string(),
+            help_area,
+            Color::Yellow,
+            true,
+        )
     }
 
     fn print_input(
@@ -150,10 +160,7 @@ impl<T: ExpectedInputTrait> Runner<T> {
             let input = Paragraph::new(input_char.to_string()).style(
                 match input_char == expected_input_char {
                     true => Style::default().fg(Color::Green),
-                    false => match input_char == ' ' {
-                        true => Style::default().bg(Color::Red),
-                        false => Style::default().fg(Color::Red),
-                    },
+                    false => Style::default().bg(Color::Red).fg(Color::Gray),
                 },
             );
             frame.render_widget(
@@ -205,17 +212,6 @@ impl<T: ExpectedInputTrait> Runner<T> {
             ),
         }
     }
-
-    fn print_help_message(&self, frame: &mut impl FrameWrapperInterface, area: Rect) {
-        let mut text = match self.input_mode {
-            InputMode::Normal => Text::from("press 'e' to start editing, press 'q' to quit"),
-            InputMode::Editing => Text::from("press 'Esc' to stop editing"),
-        };
-
-        text.patch_style(Style::default().fg(Color::Yellow));
-        let help_message = Paragraph::new(text);
-        frame.render_widget(help_message, area);
-    }
 }
 
 #[automock]
@@ -253,14 +249,14 @@ impl<'a, 'b, W: Write> FrameWrapperInterface for FrameWrapper<'a, 'b, W> {
 mod test {
     use mockall::predicate;
 
-    use crate::expected_input::MockExpectedInputTrait;
+    use crate::expected_input::MockExpectedInputInterface;
 
     use super::*;
 
     #[test]
     fn should_render_single_line_input() {
         let config = Config::default();
-        let mut expected_input = MockExpectedInputTrait::default();
+        let mut expected_input = MockExpectedInputInterface::default();
 
         expected_input
             .expect_get_string()
@@ -298,7 +294,7 @@ mod test {
     #[test]
     fn should_render_multi_line_input() {
         let config = Config::default();
-        let mut expected_input = MockExpectedInputTrait::default();
+        let mut expected_input = MockExpectedInputInterface::default();
 
         expected_input
             .expect_get_string()
@@ -336,7 +332,7 @@ mod test {
     #[test]
     fn should_print_input() {
         let config = Config::default();
-        let expected_input = MockExpectedInputTrait::default();
+        let expected_input = MockExpectedInputInterface::default();
         let mut runner = Runner::new(config, expected_input);
 
         runner.input = "foo".to_string();
@@ -364,7 +360,7 @@ mod test {
     #[test]
     fn should_print_block_of_text() {
         let config = Config::default();
-        let expected_input = MockExpectedInputTrait::default();
+        let expected_input = MockExpectedInputInterface::default();
         let runner = Runner::new(config, expected_input);
 
         let mut frame = MockFrameWrapperInterface::default();
@@ -400,7 +396,7 @@ mod test {
     #[test]
     fn should_not_move_cursor_in_normal_mode() {
         let config = Config::default();
-        let expected_input = MockExpectedInputTrait::default();
+        let expected_input = MockExpectedInputInterface::default();
         let runner = Runner::new(config, expected_input);
 
         let mut frame = MockFrameWrapperInterface::default();
@@ -423,7 +419,7 @@ mod test {
     fn should_move_cursor_in_editing_mode() {
         let config = Config::default();
 
-        let expected_input = MockExpectedInputTrait::default();
+        let expected_input = MockExpectedInputInterface::default();
         let mut runner = Runner::new(config, expected_input);
 
         runner.input_mode = InputMode::Editing;
@@ -446,73 +442,5 @@ mod test {
         let current_line_index = 16;
 
         runner.move_cursor(&mut frame, area, input_current_line_len, current_line_index)
-    }
-
-    #[test]
-    fn should_print_help_message_for_normal_mode() {
-        let config = Config::default();
-        let expected_input = MockExpectedInputTrait::default();
-        let runner = Runner::new(config, expected_input);
-
-        let mut frame = MockFrameWrapperInterface::default();
-
-        frame
-            .expect_render_widget::<Paragraph>()
-            .withf(|_widget, area| {
-                *area
-                    == Rect {
-                        x: 0,
-                        y: 0,
-                        width: 50,
-                        height: 1,
-                    }
-            })
-            .times(1)
-            .return_const(());
-
-        runner.print_help_message(
-            &mut frame,
-            Rect {
-                x: 0,
-                y: 0,
-                width: 50,
-                height: 1,
-            },
-        );
-    }
-
-    #[test]
-    fn should_print_help_message_for_editing_mode() {
-        let config = Config::default();
-        let expected_input = MockExpectedInputTrait::default();
-        let mut runner = Runner::new(config, expected_input);
-
-        runner.input_mode = InputMode::Editing;
-
-        let mut frame = MockFrameWrapperInterface::default();
-
-        frame
-            .expect_render_widget::<Paragraph>()
-            .withf(|_widget, area| {
-                *area
-                    == Rect {
-                        x: 0,
-                        y: 0,
-                        width: 50,
-                        height: 1,
-                    }
-            })
-            .times(1)
-            .return_const(());
-
-        runner.print_help_message(
-            &mut frame,
-            Rect {
-                x: 0,
-                y: 0,
-                width: 50,
-                height: 1,
-            },
-        );
     }
 }
