@@ -3,7 +3,7 @@ use mockall::automock;
 use std::io::{self, Write};
 use tui::{
     backend::CrosstermBackend,
-    layout::{Constraint, Direction, Layout, Rect},
+    layout::{Alignment, Constraint, Direction, Layout, Rect},
     style::{Color, Style},
     text::Text,
     widgets::{Paragraph, Widget, Wrap},
@@ -81,7 +81,7 @@ impl Runner {
             .constraints([Constraint::Min(1), Constraint::Length(1)].as_ref())
             .split(frame.size());
         let input_area = areas[0];
-        let help_area = areas[1];
+        let info_area = areas[1];
 
         let frame_width = frame.size().width as usize;
         let input_len = self.input.len();
@@ -112,6 +112,7 @@ impl Runner {
             },
             Color::Gray,
             false,
+            false,
         );
 
         self.print_block_of_text(
@@ -125,6 +126,7 @@ impl Runner {
             },
             Color::DarkGray,
             true,
+            false,
         );
 
         self.move_cursor(
@@ -134,6 +136,16 @@ impl Runner {
             current_line_index,
         );
 
+        let label = match self.config.duration {
+            1 => "second",
+            _ => "seconds",
+        };
+        let time_left = match self.input_mode {
+            InputMode::Normal => String::new(),
+            InputMode::Editing => format!("{} {label} left", self.config.duration,),
+        };
+        self.print_block_of_text(frame, time_left, info_area, Color::Yellow, true, false);
+
         let help_message = match self.input_mode {
             InputMode::Normal => "press 'e' to start editing, press 'q' to quit",
             InputMode::Editing => "press 'Esc' to stop editing",
@@ -141,8 +153,9 @@ impl Runner {
         self.print_block_of_text(
             frame,
             help_message.to_string(),
-            help_area,
+            info_area,
             Color::Yellow,
+            true,
             true,
         )
     }
@@ -182,6 +195,7 @@ impl Runner {
         area: Rect,
         color: Color,
         wrap: bool,
+        align_right: bool,
     ) {
         let mut text = Text::from(text_str);
         text.patch_style(Style::default().fg(color));
@@ -189,6 +203,10 @@ impl Runner {
 
         if wrap {
             paragraph = paragraph.wrap(Wrap { trim: false });
+        }
+
+        if align_right {
+            paragraph = paragraph.alignment(Alignment::Right);
         }
 
         frame.render_widget(paragraph, area);
@@ -279,7 +297,7 @@ mod test {
 
         frame
             .expect_render_widget::<Paragraph>()
-            .times(6)
+            .times(7)
             .return_const(());
 
         frame
@@ -317,7 +335,7 @@ mod test {
 
         frame
             .expect_render_widget::<Paragraph>()
-            .times(9)
+            .times(10)
             .return_const(());
 
         frame
@@ -389,6 +407,7 @@ mod test {
                 height: 1,
             },
             Color::Gray,
+            false,
             false,
         );
     }
