@@ -11,4 +11,8 @@ pub struct Args {
     /// indicates if test should include numbers
     #[arg(short, long)]
     pub numbers: Option<bool>,
+
+    /// path to dictionary file
+    #[arg(long)]
+    pub dictionary_path: Option<String>,
 }

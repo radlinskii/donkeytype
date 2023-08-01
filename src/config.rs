@@ -4,27 +4,33 @@ use serde::{Deserialize, Serialize};
 
 use std::{fs, io::Read, path::PathBuf};
 
-const DEFAULT_CONFIG: Config = Config {
-    duration: 30,
-    numbers: false,
-};
-
-#[derive(Deserialize, Serialize, Debug)]
 pub struct Config {
     pub duration: u16,
     pub numbers: bool,
+    pub dictionary_path: PathBuf,
+}
+
+#[derive(Deserialize, Serialize, Debug)]
+struct ConfigFile {
+    pub duration: Option<u16>,
+    pub numbers: Option<bool>,
+    pub dictionary_path: Option<String>,
 }
 
 #[automock]
 impl Config {
     #[allow(dead_code)]
     pub fn default() -> Self {
-        DEFAULT_CONFIG
+        Self {
+            duration: 30,
+            numbers: false,
+            dictionary_path: PathBuf::from("src/dict/words.txt"),
+        }
     }
 
     pub fn new(args: Args, config_file_path: PathBuf) -> Self {
         let config = {
-            let mut config = DEFAULT_CONFIG;
+            let mut config = Self::default();
 
             let config_file = Self::open_config_file_if_exists(config_file_path.clone());
             if let Some(config_file) = config_file {
@@ -45,11 +51,20 @@ impl Config {
                 .read_to_string(&mut config_file_content)
                 .expect("Unable to read file");
 
-            let config_from_file: Config =
+            let config_from_file: ConfigFile =
                 serde_json::from_str(&config_file_content).expect("Unable to parse config file");
 
-            config.duration = config_from_file.duration;
-            config.numbers = config_from_file.numbers;
+            if let Some(duration) = config_from_file.duration {
+                config.duration = duration;
+            }
+
+            if let Some(numbers) = config_from_file.numbers {
+                config.numbers = numbers;
+            }
+
+            if let Some(dictionary_path) = config_from_file.dictionary_path {
+                config.dictionary_path = PathBuf::from(dictionary_path);
+            }
         }
     }
 
@@ -69,6 +84,9 @@ impl Config {
         if let Some(duration) = args.duration {
             config.duration = duration;
         }
+        if let Some(dictionary_path) = args.dictionary_path {
+            config.dictionary_path = PathBuf::from(dictionary_path);
+        }
     }
 }
 
@@ -82,10 +100,8 @@ mod tests {
     fn should_create_default_values() {
         let config = Config::default();
 
-        assert_eq!(DEFAULT_CONFIG.duration, 30);
-        assert_eq!(config.duration, DEFAULT_CONFIG.duration);
-        assert_eq!(DEFAULT_CONFIG.numbers, false);
-        assert_eq!(config.numbers, DEFAULT_CONFIG.numbers);
+        assert_eq!(config.duration, 30);
+        assert_eq!(config.numbers, false);
     }
 
     #[test]
@@ -93,11 +109,12 @@ mod tests {
         let args = Args {
             duration: None,
             numbers: None,
+            dictionary_path: None,
         };
         let config = Config::new(args, PathBuf::new());
 
-        assert_eq!(config.duration, DEFAULT_CONFIG.duration);
-        assert_eq!(config.numbers, DEFAULT_CONFIG.numbers);
+        assert_eq!(config.duration, 30);
+        assert_eq!(config.numbers, false);
     }
 
     #[test]
@@ -110,6 +127,7 @@ mod tests {
         let args = Args {
             duration: None,
             numbers: None,
+            dictionary_path: None,
         };
         let config = Config::new(args, config_file.path().to_path_buf());
 
@@ -122,6 +140,7 @@ mod tests {
         let args = Args {
             duration: Some(10),
             numbers: Some(true),
+            dictionary_path: None,
         };
         let config = Config::new(args, PathBuf::new());
 
@@ -139,10 +158,12 @@ mod tests {
         let args = Args {
             duration: Some(20),
             numbers: Some(false),
+            dictionary_path: Some(String::from("/etc/dict/words")),
         };
         let config = Config::new(args, config_file.path().to_path_buf());
 
         assert_eq!(config.duration, 20);
         assert_eq!(config.numbers, false);
+        assert_eq!(config.dictionary_path, PathBuf::from("/etc/dict/words"));
     }
 }
