@@ -150,7 +150,10 @@ impl<T: ExpectedInputTrait> Runner<T> {
             let input = Paragraph::new(input_char.to_string()).style(
                 match input_char == expected_input_char {
                     true => Style::default().fg(Color::Green),
-                    false => Style::default().fg(Color::Red),
+                    false => match input_char == ' ' {
+                        true => Style::default().bg(Color::Red),
+                        false => Style::default().fg(Color::Red),
+                    },
                 },
             );
             frame.render_widget(
