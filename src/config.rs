@@ -17,7 +17,12 @@ pub struct Config {
 
 #[automock]
 impl Config {
-    pub fn new(args: Args, config_file_path: PathBuf) -> Config {
+    #[allow(dead_code)]
+    pub fn default() -> Self {
+        DEFAULT_CONFIG
+    }
+
+    pub fn new(args: Args, config_file_path: PathBuf) -> Self {
         let config = {
             let mut config = DEFAULT_CONFIG;
 
@@ -69,9 +74,19 @@ impl Config {
 
 #[cfg(test)]
 mod tests {
+    use super::*;
+
     use std::io::Write;
 
-    use super::*;
+    #[test]
+    fn should_create_default_values() {
+        let config = Config::default();
+
+        assert_eq!(DEFAULT_CONFIG.duration, 30);
+        assert_eq!(config.duration, DEFAULT_CONFIG.duration);
+        assert_eq!(DEFAULT_CONFIG.numbers, false);
+        assert_eq!(config.numbers, DEFAULT_CONFIG.numbers);
+    }
 
     #[test]
     fn should_create_new_with_default_values() {
@@ -81,9 +96,7 @@ mod tests {
         };
         let config = Config::new(args, PathBuf::new());
 
-        assert_eq!(DEFAULT_CONFIG.duration, 30);
         assert_eq!(config.duration, DEFAULT_CONFIG.duration);
-        assert_eq!(DEFAULT_CONFIG.numbers, false);
         assert_eq!(config.numbers, DEFAULT_CONFIG.numbers);
     }
 
