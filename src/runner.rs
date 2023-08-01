@@ -1,11 +1,12 @@
 use crossterm::event::{self, Event, KeyCode};
-use std::io;
+use mockall::automock;
+use std::io::{self, Write};
 use tui::{
-    backend::Backend,
+    backend::{Backend, CrosstermBackend},
     layout::{Constraint, Direction, Layout, Rect},
     style::{Color, Style},
     text::Text,
-    widgets::{Paragraph, Wrap},
+    widgets::{Paragraph, Widget, Wrap},
     Frame, Terminal,
 };
 
@@ -34,11 +35,17 @@ impl<T: ExpectedInputTrait> Runner<T> {
         }
     }
 
-    pub fn run<B: Backend>(&mut self, terminal: &mut Terminal<B>) -> io::Result<()> {
+    pub fn run<W: Write>(
+        &mut self,
+        terminal: &mut Terminal<CrosstermBackend<W>>,
+    ) -> io::Result<()> {
         let _config = &self.config;
 
         loop {
-            terminal.draw(|f| self.render(f))?;
+            terminal.draw(|f: &mut Frame<CrosstermBackend<W>>| {
+                let mut frame_wrapper = FrameWrapper::new(f);
+                self.render(&mut frame_wrapper);
+            })?;
 
             if let Event::Key(key) = event::read()? {
                 match self.input_mode {
@@ -68,7 +75,7 @@ impl<T: ExpectedInputTrait> Runner<T> {
         }
     }
 
-    fn render<B: Backend>(&self, frame: &mut Frame<B>) {
+    fn render(&self, frame: &mut impl FrameWrapperInterface) {
         let areas = Layout::default()
             .direction(Direction::Vertical)
             .constraints([Constraint::Min(1), Constraint::Length(1)].as_ref())
@@ -96,7 +103,7 @@ impl<T: ExpectedInputTrait> Runner<T> {
 
         self.print_block_of_text(
             frame,
-            expected_input_current_line_rest,
+            expected_input_current_line_rest.to_string(),
             Rect {
                 x: input_area.x + input_current_line_len as u16,
                 y: input_area.y + current_line_index,
@@ -109,7 +116,7 @@ impl<T: ExpectedInputTrait> Runner<T> {
 
         self.print_block_of_text(
             frame,
-            expected_input_following_lines,
+            expected_input_following_lines.to_string(),
             Rect {
                 x: input_area.x,
                 y: input_area.y + current_line_index + 1,
@@ -130,9 +137,9 @@ impl<T: ExpectedInputTrait> Runner<T> {
         self.print_help_message(frame, help_area);
     }
 
-    fn print_input<B: Backend>(
+    fn print_input(
         &self,
-        frame: &mut Frame<B>,
+        frame: &mut impl FrameWrapperInterface,
         expected_input: String,
         input_area: Rect,
         frame_width: usize,
@@ -158,10 +165,10 @@ impl<T: ExpectedInputTrait> Runner<T> {
         }
     }
 
-    fn print_block_of_text<B: Backend>(
+    fn print_block_of_text(
         &self,
-        frame: &mut Frame<B>,
-        text_str: &str,
+        frame: &mut impl FrameWrapperInterface,
+        text_str: String,
         area: Rect,
         color: Color,
         wrap: bool,
@@ -177,9 +184,9 @@ impl<T: ExpectedInputTrait> Runner<T> {
         frame.render_widget(paragraph, area);
     }
 
-    fn move_cursor<B: Backend>(
+    fn move_cursor(
         &self,
-        frame: &mut Frame<B>,
+        frame: &mut impl FrameWrapperInterface,
         area: Rect,
         input_current_line_len: usize,
         current_line_index: u16,
@@ -196,21 +203,88 @@ impl<T: ExpectedInputTrait> Runner<T> {
         }
     }
 
-    fn print_help_message<B: Backend>(&self, frame: &mut Frame<B>, area: Rect) {
-        match self.input_mode {
-            InputMode::Normal => {
-                let mut text = Text::from("press 'e' to start editing, press 'q' to quit");
-                text.patch_style(Style::default().fg(Color::Yellow));
-                let help_message = Paragraph::new(text);
-                frame.render_widget(help_message, area);
-            }
+    fn print_help_message(&self, frame: &mut impl FrameWrapperInterface, area: Rect) {
+        let mut text = match self.input_mode {
+            InputMode::Normal => Text::from("press 'e' to start editing, press 'q' to quit"),
+            InputMode::Editing => Text::from("press 'Esc' to stop editing"),
+        };
 
-            InputMode::Editing => {
-                let mut text = Text::from("press 'Esc' to stop editing");
-                text.patch_style(Style::default().fg(Color::Yellow));
-                let help_message = Paragraph::new(text);
-                frame.render_widget(help_message, area);
-            }
-        }
+        text.patch_style(Style::default().fg(Color::Yellow));
+        let help_message = Paragraph::new(text);
+        frame.render_widget(help_message, area);
+    }
+}
+
+#[automock]
+trait FrameWrapperInterface {
+    fn render_widget<W: Widget + 'static>(&mut self, widget: W, area: Rect);
+    fn set_cursor(&mut self, x: u16, y: u16);
+    fn size(&self) -> Rect;
+}
+
+pub struct FrameWrapper<'a, 'b, W: Write> {
+    frame: &'a mut Frame<'b, CrosstermBackend<W>>,
+}
+
+impl<'a, 'b, W: Write> FrameWrapper<'a, 'b, W> {
+    pub fn new(frame: &'a mut Frame<'b, CrosstermBackend<W>>) -> Self {
+        FrameWrapper { frame }
+    }
+}
+
+impl<'a, 'b, W: Write> FrameWrapperInterface for FrameWrapper<'a, 'b, W> {
+    fn render_widget<T: Widget + 'static>(&mut self, widget: T, area: Rect) {
+        self.frame.render_widget(widget, area);
+    }
+
+    fn set_cursor(&mut self, x: u16, y: u16) {
+        self.frame.set_cursor(x, y);
+    }
+
+    fn size(&self) -> Rect {
+        self.frame.size()
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use crate::expected_input::ExpectedInput;
+
+    use super::*;
+
+    #[test]
+    fn should_print_help_message_for_normal_mode() {
+        let config = Config {
+            duration: 10,
+            numbers: true,
+        };
+        let expected_input = ExpectedInput::new(&config);
+        let runner = Runner::new(config, expected_input);
+
+        let mut frame = MockFrameWrapperInterface::default();
+
+        frame
+            .expect_render_widget::<Paragraph>()
+            .withf(|_widget, area| {
+                *area
+                    == Rect {
+                        x: 0,
+                        y: 0,
+                        width: 50,
+                        height: 1,
+                    }
+            })
+            .times(1)
+            .return_const(());
+
+        runner.print_help_message(
+            &mut frame,
+            Rect {
+                x: 0,
+                y: 0,
+                width: 50,
+                height: 1,
+            },
+        );
     }
 }
