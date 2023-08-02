@@ -1,8 +1,8 @@
 use crossterm::event::{self, Event, KeyCode};
 use mockall::automock;
-use std::io::{self, Write};
+use std::io;
 use tui::{
-    backend::CrosstermBackend,
+    backend::Backend,
     layout::{Alignment, Constraint, Direction, Layout, Rect},
     style::{Color, Style},
     text::Text,
@@ -35,14 +35,11 @@ impl Runner {
         }
     }
 
-    pub fn run<W: Write>(
-        &mut self,
-        terminal: &mut Terminal<CrosstermBackend<W>>,
-    ) -> io::Result<()> {
+    pub fn run<B: Backend>(&mut self, terminal: &mut Terminal<B>) -> io::Result<()> {
         let _config = &self.config;
 
         loop {
-            terminal.draw(|f: &mut Frame<CrosstermBackend<W>>| {
+            terminal.draw(|f: &mut Frame<B>| {
                 let mut frame_wrapper = FrameWrapper::new(f);
                 self.render(&mut frame_wrapper);
             })?;
@@ -239,17 +236,17 @@ trait FrameWrapperInterface {
     fn size(&self) -> Rect;
 }
 
-pub struct FrameWrapper<'a, 'b, W: Write> {
-    frame: &'a mut Frame<'b, CrosstermBackend<W>>,
+pub struct FrameWrapper<'a, 'b, B: Backend> {
+    frame: &'a mut Frame<'b, B>,
 }
 
-impl<'a, 'b, W: Write> FrameWrapper<'a, 'b, W> {
-    pub fn new(frame: &'a mut Frame<'b, CrosstermBackend<W>>) -> Self {
+impl<'a, 'b, B: Backend> FrameWrapper<'a, 'b, B> {
+    pub fn new(frame: &'a mut Frame<'b, B>) -> Self {
         FrameWrapper { frame }
     }
 }
 
-impl<'a, 'b, W: Write> FrameWrapperInterface for FrameWrapper<'a, 'b, W> {
+impl<'a, 'b, B: Backend> FrameWrapperInterface for FrameWrapper<'a, 'b, B> {
     fn render_widget<T: Widget + 'static>(&mut self, widget: T, area: Rect) {
         self.frame.render_widget(widget, area);
     }
