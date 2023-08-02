@@ -57,8 +57,10 @@ mod tests {
 
     #[test]
     fn should_read_file() {
-        let mut config_file = tempfile::NamedTempFile::new().unwrap();
-        config_file.write_all(r#"halo"#.as_bytes()).unwrap();
+        let mut config_file = tempfile::NamedTempFile::new().expect("Unable to create temp file");
+        config_file
+            .write_all(r#"halo"#.as_bytes())
+            .expect("Unable to write to temp file");
         let config = Config {
             duration: 10,
             numbers: true,

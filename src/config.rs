@@ -119,10 +119,10 @@ mod tests {
 
     #[test]
     fn should_create_new_config_with_config_file_values() {
-        let mut config_file = tempfile::NamedTempFile::new().unwrap();
+        let mut config_file = tempfile::NamedTempFile::new().expect("Unable to create temp file");
         config_file
             .write_all(r#"{"duration": 10, "numbers": true }"#.as_bytes())
-            .unwrap();
+            .expect("Unable to write to temp file");
 
         let args = Args {
             duration: None,
@@ -150,10 +150,10 @@ mod tests {
 
     #[test]
     fn args_should_take_precedence_over_config_file() {
-        let mut config_file = tempfile::NamedTempFile::new().unwrap();
+        let mut config_file = tempfile::NamedTempFile::new().expect("Unable to create temp file");
         config_file
             .write_all(r#"{"duration": 10, "numbers": true }"#.as_bytes())
-            .unwrap();
+            .expect("Unable to write to temp file");
 
         let args = Args {
             duration: Some(20),
