@@ -75,6 +75,7 @@ fn fun_name() -> TerminalBackend {
     CrosstermBackend::new(stdout)
 }
 
+#[cfg(not(feature = "ci"))]
 fn restore_terminal(mut terminal: Terminal) -> Result<(), Box<dyn Error>> {
     disable_raw_mode()?;
     execute!(terminal.backend_mut(), LeaveAlternateScreen)?;
