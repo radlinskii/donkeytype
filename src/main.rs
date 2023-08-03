@@ -82,7 +82,10 @@ fn prepare_terminal() -> Result<Terminal, Box<dyn Error>> {
 
 fn restore_terminal(mut terminal: Terminal) -> Result<(), Box<dyn Error>> {
     disable_raw_mode()?;
+
+    #[cfg(not(feature = "ci"))]
     execute!(terminal.backend_mut(), LeaveAlternateScreen)?;
+
     terminal.show_cursor()?;
 
     Ok(())
