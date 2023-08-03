@@ -41,7 +41,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let config = Config::new(args, config_file_path);
     let expected_input = ExpectedInput::new(&config);
 
-    let mut terminal = prepare_terminal()?;
+    // let mut terminal = prepare_terminal()?;
 
     #[cfg(not(feature = "ci"))]
     println!("not ci");
@@ -51,14 +51,14 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     println!("press 'e' to start editing, press 'q' to quit");
 
-    let mut app = Runner::new(config, expected_input);
-    let res = app.run(&mut terminal);
+    // let mut app = Runner::new(config, expected_input);
+    // let res = app.run(&mut terminal);
 
-    restore_terminal(terminal)?;
+    // restore_terminal(terminal)?;
 
-    if let Err(err) = res {
-        println!("{:?}", err)
-    }
+    // if let Err(err) = res {
+    //     println!("{:?}", err)
+    // }
 
     Ok(())
 }
@@ -83,11 +83,7 @@ fn restore_terminal(mut terminal: Terminal) -> Result<(), Box<dyn Error>> {
     disable_raw_mode()?;
 
     #[cfg(not(feature = "ci"))]
-    execute!(
-        terminal.backend_mut(),
-        LeaveAlternateScreen,
-        DisableMouseCapture
-    )?;
+    execute!(terminal.backend_mut(), LeaveAlternateScreen)?;
 
     terminal.show_cursor()?;
 
