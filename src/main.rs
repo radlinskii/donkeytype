@@ -28,7 +28,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let config = Config::new(args, config_file_path);
     let expected_input = ExpectedInput::new(&config);
 
-    // let mut terminal = prepare_terminal()?;
+    let mut _terminal = prepare_terminal()?;
 
     println!("press 'e' to start editing, press 'q' to quit");
 
