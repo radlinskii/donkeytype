@@ -38,13 +38,19 @@ impl Runner {
     pub fn run<B: Backend>(&mut self, terminal: &mut Terminal<B>) -> io::Result<()> {
         let _config = &self.config;
 
+        #[cfg(feature = "ci")]
+        terminal.draw(|f: &mut Frame<B>| {
+            let mut frame_wrapper = FrameWrapper::new(f);
+            self.render(&mut frame_wrapper);
+        })?;
+
+        #[cfg(not(feature = "ci"))]
         loop {
             terminal.draw(|f: &mut Frame<B>| {
                 let mut frame_wrapper = FrameWrapper::new(f);
                 self.render(&mut frame_wrapper);
             })?;
 
-            #[cfg(not(feature = "ci"))]
             if let Event::Key(key) = event::read().expect("Unable to read event") {
                 match self.input_mode {
                     InputMode::Normal => match key.code {
