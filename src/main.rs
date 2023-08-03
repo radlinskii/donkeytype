@@ -47,7 +47,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 fn prepare_terminal() -> Result<Terminal<CrosstermBackend<io::Stdout>>, Box<dyn Error>> {
     enable_raw_mode()?;
     let mut stdout = io::stdout();
-    execute!(stdout, EnterAlternateScreen, EnableMouseCapture)?;
+    execute!(stdout, EnterAlternateScreen).expect("Unable to enter alternate screen");
     let backend = CrosstermBackend::new(stdout);
     let terminal = Terminal::new(backend)?;
 
