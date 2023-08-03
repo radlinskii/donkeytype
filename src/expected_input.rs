@@ -1,6 +1,9 @@
+use std::io::Read;
+
 use crate::config::Config;
 
 use mockall::automock;
+use rand::{seq::SliceRandom, thread_rng};
 
 #[derive(Debug)]
 pub struct ExpectedInput {
@@ -8,16 +11,16 @@ pub struct ExpectedInput {
 }
 
 impl ExpectedInput {
-    pub fn new(_config: &Config) -> Self {
-        // let mut file =
-        // std::fs::File::open(config.dictionary_path.clone()).expect("Unable to open file");
-        let s = String::from("halo");
-        // file.read_to_string(&mut s).expect("Unable to read file");
+    pub fn new(config: &Config) -> Self {
+        let mut file =
+            std::fs::File::open(config.dictionary_path.clone()).expect("Unable to open file");
+        let mut s = String::new();
+        file.read_to_string(&mut s).expect("Unable to read file");
 
-        // let mut s = s.split("\n").collect::<Vec<&str>>();
-        // let mut rng = thread_rng();
-        // s.shuffle(&mut rng);
-        // let s = s.join(" ").trim().to_string();
+        let mut s = s.split("\n").collect::<Vec<&str>>();
+        let mut rng = thread_rng();
+        s.shuffle(&mut rng);
+        let s = s.join(" ").trim().to_string();
 
         Self { str: s }
     }
