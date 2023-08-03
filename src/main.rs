@@ -67,6 +67,7 @@ fn prepare_terminal() -> Result<Terminal, Box<dyn Error>> {
     Ok(terminal)
 }
 
+#[cfg(not(feature = "ci"))]
 fn fun_name() -> TerminalBackend {
     enable_raw_mode().expect("Unable to enable raw mode");
     let mut stdout = io::stdout();
