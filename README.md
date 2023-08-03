@@ -4,7 +4,6 @@ very minimalistic **_cli_** typing test
 
 ### Todo
 
--   [ ] proper error handling
 -   [ ] stop running test after given duration
 -   [ ] count & display & save results
 -   [ ] handle alt+backspace to delete last word from input
