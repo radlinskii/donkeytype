@@ -28,16 +28,18 @@ fn main() -> Result<(), Box<dyn Error>> {
     let config = Config::new(args, config_file_path);
     let expected_input = ExpectedInput::new(&config);
 
-    let mut terminal = prepare_terminal()?;
+    // let mut terminal = prepare_terminal()?;
 
-    let mut app = Runner::new(config, expected_input);
-    let res = app.run(&mut terminal);
+    println!("press 'e' to start editing, press 'q' to quit");
 
-    restore_terminal(terminal)?;
+    let mut _app = Runner::new(config, expected_input);
+    // let res = app.run(&mut terminal);
 
-    if let Err(err) = res {
-        println!("{:?}", err)
-    }
+    // restore_terminal(terminal)?;
+
+    // if let Err(err) = res {
+    //     println!("{:?}", err)
+    // }
 
     Ok(())
 }
