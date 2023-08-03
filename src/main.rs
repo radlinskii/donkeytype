@@ -5,7 +5,6 @@ mod runner;
 
 use clap::Parser;
 use crossterm::{
-    event::DisableMouseCapture,
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
