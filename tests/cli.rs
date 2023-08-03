@@ -1,7 +1,6 @@
-use std::io::Write;
-
 use assert_cmd::Command;
 use predicates;
+use std::io::Write;
 
 #[ignore = "broken on GitHub Actions"]
 #[test]

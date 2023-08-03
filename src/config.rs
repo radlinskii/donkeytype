@@ -1,8 +1,9 @@
-use crate::Args;
+use anyhow::{Context, Result};
 use mockall::*;
 use serde::{Deserialize, Serialize};
-
 use std::{fs, io::Read, path::PathBuf};
+
+use crate::Args;
 
 pub struct Config {
     pub duration: u16,
@@ -28,65 +29,69 @@ impl Config {
         }
     }
 
-    pub fn new(args: Args, config_file_path: PathBuf) -> Self {
+    pub fn new(args: Args, config_file_path: PathBuf) -> Result<Self> {
         let config = {
             let mut config = Self::default();
 
-            let config_file = Self::open_config_file_if_exists(config_file_path.clone());
+            let config_file = open_config_file_if_exists(config_file_path.clone())
+                .context("Unable to open config file")?;
             if let Some(config_file) = config_file {
-                Self::augment_config_with_config_file(&mut config, config_file);
+                augment_config_with_config_file(&mut config, config_file)
+                    .context("Unable to augment config with config file")?;
             }
-            Self::augment_config_with_args(&mut config, args);
+            augment_config_with_args(&mut config, args);
 
             config
         };
 
-        config
+        Ok(config)
     }
+}
 
-    fn augment_config_with_config_file(config: &mut Config, mut config_file: fs::File) {
-        if config_file.metadata().is_ok() {
-            let mut config_file_content = String::new();
-            config_file
-                .read_to_string(&mut config_file_content)
-                .expect("Unable to read file");
+fn augment_config_with_config_file(config: &mut Config, mut config_file: fs::File) -> Result<()> {
+    if config_file.metadata().is_ok() {
+        let mut config_file_content = String::new();
+        config_file
+            .read_to_string(&mut config_file_content)
+            .context("Unable to read file")?;
 
-            let config_from_file: ConfigFile =
-                serde_json::from_str(&config_file_content).expect("Unable to parse config file");
+        let config_from_file: ConfigFile =
+            serde_json::from_str(&config_file_content).context("Unable to parse config file")?;
 
-            if let Some(duration) = config_from_file.duration {
-                config.duration = duration;
-            }
-
-            if let Some(numbers) = config_from_file.numbers {
-                config.numbers = numbers;
-            }
-
-            if let Some(dictionary_path) = config_from_file.dictionary_path {
-                config.dictionary_path = PathBuf::from(dictionary_path);
-            }
-        }
-    }
-
-    fn open_config_file_if_exists(config_file: PathBuf) -> Option<fs::File> {
-        if config_file.exists() {
-            let config_file = fs::File::open(config_file).expect("Unable to open config file");
-            return Some(config_file);
-        }
-
-        return None;
-    }
-
-    fn augment_config_with_args(config: &mut Config, args: Args) {
-        if let Some(numbers_flag) = args.numbers {
-            config.numbers = numbers_flag;
-        }
-        if let Some(duration) = args.duration {
+        if let Some(duration) = config_from_file.duration {
             config.duration = duration;
         }
-        if let Some(dictionary_path) = args.dictionary_path {
+
+        if let Some(numbers) = config_from_file.numbers {
+            config.numbers = numbers;
+        }
+
+        if let Some(dictionary_path) = config_from_file.dictionary_path {
             config.dictionary_path = PathBuf::from(dictionary_path);
         }
+    }
+
+    Ok(())
+}
+
+fn open_config_file_if_exists(config_file: PathBuf) -> Result<Option<fs::File>> {
+    if config_file.exists() {
+        let config_file = fs::File::open(config_file).context("Unable to open config file")?;
+        return Ok(Some(config_file));
+    }
+
+    return Ok(None);
+}
+
+fn augment_config_with_args(config: &mut Config, args: Args) {
+    if let Some(numbers_flag) = args.numbers {
+        config.numbers = numbers_flag;
+    }
+    if let Some(duration) = args.duration {
+        config.duration = duration;
+    }
+    if let Some(dictionary_path) = args.dictionary_path {
+        config.dictionary_path = PathBuf::from(dictionary_path);
     }
 }
 
@@ -111,7 +116,7 @@ mod tests {
             numbers: None,
             dictionary_path: None,
         };
-        let config = Config::new(args, PathBuf::new());
+        let config = Config::new(args, PathBuf::new()).expect("Unable to create config");
 
         assert_eq!(config.duration, 30);
         assert_eq!(config.numbers, false);
@@ -129,7 +134,8 @@ mod tests {
             numbers: None,
             dictionary_path: None,
         };
-        let config = Config::new(args, config_file.path().to_path_buf());
+        let config =
+            Config::new(args, config_file.path().to_path_buf()).expect("Unable to create config");
 
         assert_eq!(config.duration, 10);
         assert_eq!(config.numbers, true);
@@ -142,7 +148,7 @@ mod tests {
             numbers: Some(true),
             dictionary_path: None,
         };
-        let config = Config::new(args, PathBuf::new());
+        let config = Config::new(args, PathBuf::new()).expect("Unable to create config");
 
         assert_eq!(config.duration, 10);
         assert_eq!(config.numbers, true);
@@ -160,7 +166,8 @@ mod tests {
             numbers: Some(false),
             dictionary_path: Some(String::from("/etc/dict/words")),
         };
-        let config = Config::new(args, config_file.path().to_path_buf());
+        let config =
+            Config::new(args, config_file.path().to_path_buf()).expect("Unable to create config");
 
         assert_eq!(config.duration, 20);
         assert_eq!(config.numbers, false);

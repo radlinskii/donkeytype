@@ -1,6 +1,6 @@
+use anyhow::{Context, Result};
 use crossterm::event::{self, Event, KeyCode};
 use mockall::automock;
-use std::io;
 use tui::{
     backend::Backend,
     layout::{Alignment, Constraint, Direction, Layout, Rect},
@@ -35,7 +35,7 @@ impl Runner {
         }
     }
 
-    pub fn run<B: Backend>(&mut self, terminal: &mut Terminal<B>) -> io::Result<()> {
+    pub fn run<B: Backend>(&mut self, terminal: &mut Terminal<B>) -> Result<()> {
         let _config = &self.config;
 
         loop {
@@ -44,9 +44,9 @@ impl Runner {
                     let mut frame_wrapper = FrameWrapper::new(f);
                     self.render(&mut frame_wrapper);
                 })
-                .expect("Unable to draw in terminal");
+                .context("Unable to draw in terminal")?;
 
-            if let Event::Key(key) = event::read().expect("Unable to read event") {
+            if let Event::Key(key) = event::read().context("Unable to read event")? {
                 match self.input_mode {
                     InputMode::Normal => match key.code {
                         KeyCode::Char('e') => {

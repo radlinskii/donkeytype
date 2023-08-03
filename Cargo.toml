@@ -6,6 +6,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+anyhow = "1.0.72"
 assert_cmd = "2.0.12"
 clap = { version = "4.3.15", features = ["derive"] }
 crossterm = "0.26.1"
