@@ -44,7 +44,7 @@ impl Runner {
                 self.render(&mut frame_wrapper);
             })?;
 
-            if let Event::Key(key) = event::read()? {
+            if let Event::Key(key) = event::read().expect("Unable to read event") {
                 match self.input_mode {
                     InputMode::Normal => match key.code {
                         KeyCode::Char('e') => {
