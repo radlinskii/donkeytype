@@ -44,6 +44,7 @@ impl Runner {
                 self.render(&mut frame_wrapper);
             })?;
 
+            #[cfg(not(feature = "ci"))]
             if let Event::Key(key) = event::read().expect("Unable to read event") {
                 match self.input_mode {
                     InputMode::Normal => match key.code {
