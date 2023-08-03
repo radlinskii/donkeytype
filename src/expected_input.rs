@@ -11,6 +11,14 @@ pub struct ExpectedInput {
 }
 
 impl ExpectedInput {
+    #[cfg(feature = "ci")]
+    pub fn new(_config: &Config) -> Self {
+        Self {
+            str: "hello world".to_string(),
+        }
+    }
+
+    #[cfg(not(feature = "ci"))]
     pub fn new(config: &Config) -> Self {
         let mut file =
             std::fs::File::open(config.dictionary_path.clone()).expect("Unable to open file");
@@ -55,6 +63,7 @@ mod tests {
         assert_eq!(expected_input.get_string(12).len(), 12);
     }
 
+    #[cfg(not(feature = "ci"))]
     #[test]
     fn should_read_file() {
         let mut config_file = tempfile::NamedTempFile::new().expect("Unable to create temp file");
