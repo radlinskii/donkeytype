@@ -5,7 +5,6 @@ mod runner;
 
 use clap::Parser;
 use crossterm::{
-    event::{DisableMouseCapture, EnableMouseCapture},
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
@@ -28,26 +27,28 @@ fn main() -> Result<(), Box<dyn Error>> {
     let config = Config::new(args, config_file_path);
     let expected_input = ExpectedInput::new(&config);
 
-    let mut terminal = prepare_terminal()?;
+    let mut terminal = prepare_terminal().expect("Unable to configure terminal");
 
     let mut app = Runner::new(config, expected_input);
     let res = app.run(&mut terminal);
-
-    restore_terminal(terminal)?;
 
     if let Err(err) = res {
         println!("{:?}", err)
     }
 
+    restore_terminal(terminal).expect("Unable to restore terminal configuration");
+
     Ok(())
 }
 
 fn prepare_terminal() -> Result<Terminal<CrosstermBackend<io::Stdout>>, Box<dyn Error>> {
-    enable_raw_mode()?;
+    enable_raw_mode().expect("Unable to enable raw mode");
     let mut stdout = io::stdout();
-    execute!(stdout, EnterAlternateScreen, EnableMouseCapture)?;
+    execute!(stdout, EnterAlternateScreen).expect("Unable to enter alternate screen");
+
     let backend = CrosstermBackend::new(stdout);
-    let terminal = Terminal::new(backend)?;
+
+    let terminal = Terminal::new(backend).expect("Unable to create terminal");
 
     Ok(terminal)
 }
@@ -55,13 +56,10 @@ fn prepare_terminal() -> Result<Terminal<CrosstermBackend<io::Stdout>>, Box<dyn 
 fn restore_terminal(
     mut terminal: Terminal<CrosstermBackend<io::Stdout>>,
 ) -> Result<(), Box<dyn Error>> {
-    disable_raw_mode()?;
-    execute!(
-        terminal.backend_mut(),
-        LeaveAlternateScreen,
-        DisableMouseCapture
-    )?;
-    terminal.show_cursor()?;
+    disable_raw_mode().expect("Unable to disable raw mode");
+    execute!(terminal.backend_mut(), LeaveAlternateScreen)
+        .expect("Unable to leave alternate screen");
+    terminal.show_cursor().expect("Unable to show cursor");
 
     Ok(())
 }
