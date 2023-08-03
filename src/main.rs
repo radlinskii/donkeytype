@@ -30,13 +30,13 @@ fn main() -> Result<(), Box<dyn Error>> {
     let mut terminal = prepare_terminal().expect("Unable to configure terminal");
 
     let mut app = Runner::new(config, expected_input);
-    let res: Result<(), io::Error> = app.run(&mut terminal);
-
-    restore_terminal(terminal).expect("Unable to restore terminal configuration");
+    let res = app.run(&mut terminal);
 
     if let Err(err) = res {
         println!("{:?}", err)
     }
+
+    restore_terminal(terminal).expect("Unable to restore terminal configuration");
 
     Ok(())
 }

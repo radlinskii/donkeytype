@@ -39,10 +39,12 @@ impl Runner {
         let _config = &self.config;
 
         loop {
-            terminal.draw(|f: &mut Frame<B>| {
-                let mut frame_wrapper = FrameWrapper::new(f);
-                self.render(&mut frame_wrapper);
-            })?;
+            terminal
+                .draw(|f: &mut Frame<B>| {
+                    let mut frame_wrapper = FrameWrapper::new(f);
+                    self.render(&mut frame_wrapper);
+                })
+                .expect("Unable to draw in terminal");
 
             if let Event::Key(key) = event::read().expect("Unable to read event") {
                 match self.input_mode {
