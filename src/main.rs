@@ -64,9 +64,13 @@ fn main() -> Result<(), Box<dyn Error>> {
 }
 
 fn prepare_terminal() -> Result<Terminal, Box<dyn Error>> {
+    #[cfg(not(feature = "ci"))]
     enable_raw_mode().expect("Unable to enable raw mode");
+
+    #[cfg(not(feature = "ci"))]
     let mut stdout = io::stdout();
 
+    #[cfg(not(feature = "ci"))]
     execute!(stdout, EnterAlternateScreen).expect("Unable to enter alternate screen");
 
     #[cfg(not(feature = "ci"))]
@@ -81,11 +85,13 @@ fn prepare_terminal() -> Result<Terminal, Box<dyn Error>> {
 }
 
 fn restore_terminal(mut terminal: Terminal) -> Result<(), Box<dyn Error>> {
+    #[cfg(not(feature = "ci"))]
     disable_raw_mode()?;
 
     #[cfg(not(feature = "ci"))]
     execute!(terminal.backend_mut(), LeaveAlternateScreen)?;
 
+    #[cfg(not(feature = "ci"))]
     terminal.show_cursor()?;
 
     Ok(())
