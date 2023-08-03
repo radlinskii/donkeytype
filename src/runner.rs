@@ -35,19 +35,6 @@ impl Runner {
         }
     }
 
-    #[cfg(feature = "ci")]
-    pub fn run<B: Backend>(&mut self, terminal: &mut Terminal<B>) -> io::Result<()> {
-        let _config = &self.config;
-
-        terminal.draw(|f: &mut Frame<B>| {
-            let mut frame_wrapper = FrameWrapper::new(f);
-            self.render(&mut frame_wrapper);
-        })?;
-
-        Ok(())
-    }
-
-    #[cfg(not(feature = "ci"))]
     pub fn run<B: Backend>(&mut self, terminal: &mut Terminal<B>) -> io::Result<()> {
         let _config = &self.config;
 
