@@ -49,7 +49,7 @@ fn prepare_terminal() -> Result<Terminal<CrosstermBackend<io::Stdout>>, Box<dyn 
     let mut stdout = io::stdout();
     execute!(stdout, EnterAlternateScreen).expect("Unable to enter alternate screen");
     let backend = CrosstermBackend::new(stdout);
-    let terminal = Terminal::new(backend)?;
+    let terminal = Terminal::new(backend).expect("Unable to create terminal");
 
     Ok(terminal)
 }
