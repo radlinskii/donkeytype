@@ -209,7 +209,7 @@ impl Runner {
         for ((input_char_index, input_char), (_, expected_input_char)) in
             self.input.char_indices().zip(expected_input.char_indices())
         {
-            let input = Paragraph::new(input_char.to_string()).style(
+            let input = Paragraph::new(expected_input_char.to_string()).style(
                 match input_char == expected_input_char {
                     true => Style::default().fg(Color::Green),
                     false => Style::default().bg(Color::Red).fg(Color::Gray),
