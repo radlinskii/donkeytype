@@ -1,6 +1,7 @@
 use anyhow::{Context, Result};
 use crossterm::event::{self, Event, KeyCode};
 use mockall::automock;
+use std::time::{Duration, Instant};
 use tui::{
     backend::Backend,
     layout::{Alignment, Constraint, Direction, Layout, Rect},
@@ -36,45 +37,72 @@ impl Runner {
     }
 
     pub fn run<B: Backend>(&mut self, terminal: &mut Terminal<B>) -> Result<()> {
-        let _config = &self.config;
+        let mut start_time = Instant::now();
+        let mut pause_time = Instant::now();
+        let mut is_started = false;
+        let tick_rate = Duration::from_secs(1);
+        let mut last_tick = Instant::now();
 
         loop {
+            if let InputMode::Editing = self.input_mode {
+                if is_started && start_time.elapsed() >= self.config.duration {
+                    return Ok(());
+                }
+            }
+
             terminal
                 .draw(|f: &mut Frame<B>| {
                     let mut frame_wrapper = FrameWrapper::new(f);
-                    self.render(&mut frame_wrapper);
+                    self.render(&mut frame_wrapper, start_time.elapsed().as_secs());
                 })
                 .context("Unable to draw in terminal")?;
 
-            if let Event::Key(key) = event::read().context("Unable to read event")? {
-                match self.input_mode {
-                    InputMode::Normal => match key.code {
-                        KeyCode::Char('e') => {
-                            self.input_mode = InputMode::Editing;
-                        }
-                        KeyCode::Char('q') => {
-                            return Ok(());
-                        }
-                        _ => {}
-                    },
-                    InputMode::Editing => match key.code {
-                        KeyCode::Char(c) => {
-                            self.input.push(c);
-                        }
-                        KeyCode::Backspace => {
-                            self.input.pop();
-                        }
-                        KeyCode::Esc => {
-                            self.input_mode = InputMode::Normal;
-                        }
-                        _ => {}
-                    },
+            let timeout = tick_rate
+                .checked_sub(last_tick.elapsed())
+                .unwrap_or_else(|| Duration::from_secs(0));
+
+            if event::poll(timeout).context("Unable to poll for event")? {
+                if let Event::Key(key) = event::read().context("Unable to read event")? {
+                    match self.input_mode {
+                        InputMode::Normal => match key.code {
+                            KeyCode::Char('e') => {
+                                start_time = if is_started {
+                                    start_time + pause_time.elapsed()
+                                } else {
+                                    Instant::now()
+                                };
+                                is_started = true;
+                                self.input_mode = InputMode::Editing;
+                            }
+                            KeyCode::Char('q') => {
+                                return Ok(());
+                            }
+                            _ => {}
+                        },
+                        InputMode::Editing => match key.code {
+                            KeyCode::Char(c) => {
+                                self.input.push(c);
+                            }
+                            KeyCode::Backspace => {
+                                self.input.pop();
+                            }
+                            KeyCode::Esc => {
+                                pause_time = Instant::now();
+                                self.input_mode = InputMode::Normal;
+                            }
+                            _ => {}
+                        },
+                    }
                 }
+            }
+
+            if last_tick.elapsed() >= tick_rate {
+                last_tick = Instant::now();
             }
         }
     }
 
-    fn render(&self, frame: &mut impl FrameWrapperInterface) {
+    fn render(&self, frame: &mut impl FrameWrapperInterface, time_elapsed: u64) {
         let areas = Layout::default()
             .direction(Direction::Vertical)
             .constraints([Constraint::Min(1), Constraint::Length(1)].as_ref())
@@ -135,19 +163,31 @@ impl Runner {
             current_line_index,
         );
 
-        let label = match self.config.duration {
+        let time_left = self
+            .config
+            .duration
+            .checked_sub(Duration::from_secs(time_elapsed))
+            .unwrap_or(Duration::from_secs(0));
+        let label = match time_left.as_secs() {
             1 => "second",
             _ => "seconds",
         };
-        let time_left = match self.input_mode {
+        let time_left_message = match self.input_mode {
             InputMode::Normal => String::new(),
-            InputMode::Editing => format!("{} {label} left", self.config.duration,),
+            InputMode::Editing => format!("{} {label} left", time_left.as_secs()),
         };
-        self.print_block_of_text(frame, time_left, info_area, Color::Yellow, true, false);
+        self.print_block_of_text(
+            frame,
+            time_left_message,
+            info_area,
+            Color::Yellow,
+            true,
+            false,
+        );
 
         let help_message = match self.input_mode {
-            InputMode::Normal => "press 'e' to start editing, press 'q' to quit",
-            InputMode::Editing => "press 'Esc' to stop editing",
+            InputMode::Normal => "press 'e' to start the test, press 'q' to quit",
+            InputMode::Editing => "press 'Esc' to pause the test",
         };
         self.print_block_of_text(
             frame,
@@ -305,7 +345,7 @@ mod test {
             .times(1)
             .return_const(());
 
-        runner.render(&mut frame);
+        runner.render(&mut frame, 0);
     }
 
     #[test]
@@ -343,7 +383,7 @@ mod test {
             .times(1)
             .return_const(());
 
-        runner.render(&mut frame);
+        runner.render(&mut frame, 0);
     }
 
     #[test]

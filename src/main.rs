@@ -33,11 +33,11 @@ fn main() -> anyhow::Result<()> {
     let mut app = Runner::new(config, expected_input);
     let res = app.run(&mut terminal);
 
+    restore_terminal(terminal).context("Unable to restore terminal")?;
+
     if let Err(err) = res {
         println!("{:?}", err)
     }
-
-    restore_terminal(terminal).context("Unable to restore terminal")?;
 
     Ok(())
 }

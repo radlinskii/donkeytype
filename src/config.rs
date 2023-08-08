@@ -1,19 +1,19 @@
 use anyhow::{Context, Result};
 use mockall::*;
 use serde::{Deserialize, Serialize};
-use std::{fs, io::Read, path::PathBuf};
+use std::{fs, io::Read, path::PathBuf, time::Duration};
 
 use crate::Args;
 
 pub struct Config {
-    pub duration: u16,
+    pub duration: Duration,
     pub numbers: bool,
     pub dictionary_path: PathBuf,
 }
 
 #[derive(Deserialize, Serialize, Debug)]
 struct ConfigFile {
-    pub duration: Option<u16>,
+    pub duration: Option<u64>,
     pub numbers: Option<bool>,
     pub dictionary_path: Option<String>,
 }
@@ -23,7 +23,7 @@ impl Config {
     #[allow(dead_code)]
     pub fn default() -> Self {
         Self {
-            duration: 30,
+            duration: Duration::from_secs(30),
             numbers: false,
             dictionary_path: PathBuf::from("src/dict/words.txt"),
         }
@@ -59,7 +59,7 @@ fn augment_config_with_config_file(config: &mut Config, mut config_file: fs::Fil
             serde_json::from_str(&config_file_content).context("Unable to parse config file")?;
 
         if let Some(duration) = config_from_file.duration {
-            config.duration = duration;
+            config.duration = Duration::from_secs(duration);
         }
 
         if let Some(numbers) = config_from_file.numbers {
@@ -88,7 +88,7 @@ fn augment_config_with_args(config: &mut Config, args: Args) {
         config.numbers = numbers_flag;
     }
     if let Some(duration) = args.duration {
-        config.duration = duration;
+        config.duration = Duration::from_secs(duration);
     }
     if let Some(dictionary_path) = args.dictionary_path {
         config.dictionary_path = PathBuf::from(dictionary_path);
@@ -105,7 +105,7 @@ mod tests {
     fn should_create_default_values() {
         let config = Config::default();
 
-        assert_eq!(config.duration, 30);
+        assert_eq!(config.duration, Duration::from_secs(30));
         assert_eq!(config.numbers, false);
     }
 
@@ -118,7 +118,7 @@ mod tests {
         };
         let config = Config::new(args, PathBuf::new()).expect("Unable to create config");
 
-        assert_eq!(config.duration, 30);
+        assert_eq!(config.duration, Duration::from_secs(30));
         assert_eq!(config.numbers, false);
     }
 
@@ -137,7 +137,7 @@ mod tests {
         let config =
             Config::new(args, config_file.path().to_path_buf()).expect("Unable to create config");
 
-        assert_eq!(config.duration, 10);
+        assert_eq!(config.duration, Duration::from_secs(10));
         assert_eq!(config.numbers, true);
     }
 
@@ -150,7 +150,7 @@ mod tests {
         };
         let config = Config::new(args, PathBuf::new()).expect("Unable to create config");
 
-        assert_eq!(config.duration, 10);
+        assert_eq!(config.duration, Duration::from_secs(10));
         assert_eq!(config.numbers, true);
     }
 
@@ -169,7 +169,7 @@ mod tests {
         let config =
             Config::new(args, config_file.path().to_path_buf()).expect("Unable to create config");
 
-        assert_eq!(config.duration, 20);
+        assert_eq!(config.duration, Duration::from_secs(20));
         assert_eq!(config.numbers, false);
         assert_eq!(config.dictionary_path, PathBuf::from("/etc/dict/words"));
     }

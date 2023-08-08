@@ -6,7 +6,7 @@ use clap::Parser;
 pub struct Args {
     /// duration of the test in seconds
     #[arg(short, long)]
-    pub duration: Option<u16>,
+    pub duration: Option<u64>,
 
     /// indicates if test should include numbers
     #[arg(short, long)]

@@ -44,7 +44,7 @@ impl ExpectedInputInterface for ExpectedInput {
 
 #[cfg(test)]
 mod tests {
-    use std::io::Write;
+    use std::{io::Write, time::Duration};
 
     use super::*;
 
@@ -63,7 +63,7 @@ mod tests {
             .write_all(r#"halo"#.as_bytes())
             .expect("Unable to write to temp file");
         let config = Config {
-            duration: 10,
+            duration: Duration::from_secs(30),
             numbers: true,
             dictionary_path: config_file.path().to_path_buf(),
         };
