@@ -37,8 +37,8 @@ fn main() -> anyhow::Result<()> {
 
     if let Err(err) = res {
         println!("{:?}", err)
-    } else if let Ok(score) = res {
-        println!("{:?}", score);
+    } else if let Ok(stats) = res {
+        println!("{:?}", stats);
     }
 
     Ok(())

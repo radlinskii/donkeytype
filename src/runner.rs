@@ -25,15 +25,17 @@ pub struct Runner {
     config: Config,
     expected_input: Box<dyn ExpectedInputInterface>,
     mistakes: u64,
+    valid_characters: u64,
 }
 
 #[derive(Debug)]
-pub struct Score {
-    pub characters: u64,
+pub struct Stats {
     pub wpm: f64,
+    pub characters: u64,
+    pub valid_characters: u64,
     pub mistakes: u64,
-    pub uncorrected_mistakes: u64,
     pub accuracy: f64,
+    pub uncorrected_mistakes: u64,
     pub uncorrected_accuracy: f64,
 }
 
@@ -45,10 +47,11 @@ impl Runner {
             config,
             expected_input: Box::new(expected_input),
             mistakes: 0,
+            valid_characters: 0,
         }
     }
 
-    pub fn run<B: Backend>(&mut self, terminal: &mut Terminal<B>) -> Result<Score> {
+    pub fn run<B: Backend>(&mut self, terminal: &mut Terminal<B>) -> Result<Stats> {
         let mut start_time = Instant::now();
         let mut pause_time = Instant::now();
         let mut is_started = false;
@@ -58,7 +61,7 @@ impl Runner {
         loop {
             if let InputMode::Editing = self.input_mode {
                 if is_started && start_time.elapsed() >= self.config.duration {
-                    return Ok(self.get_score());
+                    return Ok(self.get_stats());
                 }
             }
 
@@ -87,10 +90,11 @@ impl Runner {
                                 self.input_mode = InputMode::Editing;
                             }
                             KeyCode::Char('q') => {
-                                return Ok(Score {
-                                    characters: 0,
-                                    mistakes: 0,
+                                return Ok(Stats {
                                     wpm: 0.0,
+                                    characters: 0,
+                                    valid_characters: 0,
+                                    mistakes: 0,
                                     accuracy: 0.0,
                                     uncorrected_mistakes: 0,
                                     uncorrected_accuracy: 0.0,
@@ -101,6 +105,21 @@ impl Runner {
                         InputMode::Editing => match key.code {
                             KeyCode::Char(c) => {
                                 self.input.push(c);
+
+                                let expected_input = self
+                                    .expected_input
+                                    .get_string(self.input.len())
+                                    .chars()
+                                    .collect::<Vec<char>>();
+
+                                let is_correct =
+                                    self.input.chars().last() == expected_input.last().copied();
+
+                                if !is_correct {
+                                    self.mistakes += 1;
+                                } else {
+                                    self.valid_characters += 1;
+                                }
                             }
                             KeyCode::Backspace => {
                                 self.input.pop();
@@ -228,16 +247,12 @@ impl Runner {
         for ((input_char_index, input_char), (_, expected_input_char)) in
             self.input.char_indices().zip(expected_input.char_indices())
         {
-            let is_correct = input_char == expected_input_char;
-
-            if !is_correct {
-                self.mistakes += 1;
-            }
-
-            let input = Paragraph::new(expected_input_char.to_string()).style(match is_correct {
-                true => Style::default().fg(Color::Green),
-                false => Style::default().bg(Color::Red).fg(Color::Gray),
-            });
+            let input = Paragraph::new(expected_input_char.to_string()).style(
+                match input_char == expected_input_char {
+                    true => Style::default().fg(Color::Green),
+                    false => Style::default().bg(Color::Red).fg(Color::Gray),
+                },
+            );
             frame.render_widget(
                 input,
                 Rect {
@@ -293,7 +308,7 @@ impl Runner {
         }
     }
 
-    fn get_score(&self) -> Score {
+    fn get_stats(&self) -> Stats {
         let characters = self.input.chars().count() as u64;
         let uncorrected_mistakes = self
             .input
@@ -302,13 +317,15 @@ impl Runner {
             .filter(|(input_char, expected_input_char)| input_char != expected_input_char)
             .count() as u64;
 
-        Score {
-            characters,
+        Stats {
             wpm: characters as f64 / 5.0 * 60.0 / self.config.duration.as_secs() as f64,
+            characters,
+            valid_characters: self.valid_characters,
             mistakes: self.mistakes,
-            accuracy: 100.0 - self.mistakes as f64 / characters as f64 * 100.0,
+            accuracy: 100.0 - self.mistakes as f64 / self.valid_characters as f64 * 100.0,
             uncorrected_mistakes,
-            uncorrected_accuracy: 100.0 - uncorrected_mistakes as f64 / characters as f64 * 100.0,
+            uncorrected_accuracy: 100.0
+                - uncorrected_mistakes as f64 / self.valid_characters as f64 * 100.0,
         }
     }
 }
