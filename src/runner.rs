@@ -24,6 +24,17 @@ pub struct Runner {
     input_mode: InputMode,
     config: Config,
     expected_input: Box<dyn ExpectedInputInterface>,
+    mistakes: u64,
+}
+
+#[derive(Debug)]
+pub struct Score {
+    pub characters: u64,
+    pub wpm: f64,
+    pub mistakes: u64,
+    pub uncorrected_mistakes: u64,
+    pub accuracy: f64,
+    pub uncorrected_accuracy: f64,
 }
 
 impl Runner {
@@ -33,10 +44,11 @@ impl Runner {
             input_mode: InputMode::Normal,
             config,
             expected_input: Box::new(expected_input),
+            mistakes: 0,
         }
     }
 
-    pub fn run<B: Backend>(&mut self, terminal: &mut Terminal<B>) -> Result<()> {
+    pub fn run<B: Backend>(&mut self, terminal: &mut Terminal<B>) -> Result<Score> {
         let mut start_time = Instant::now();
         let mut pause_time = Instant::now();
         let mut is_started = false;
@@ -46,7 +58,7 @@ impl Runner {
         loop {
             if let InputMode::Editing = self.input_mode {
                 if is_started && start_time.elapsed() >= self.config.duration {
-                    return Ok(());
+                    return Ok(self.get_score());
                 }
             }
 
@@ -75,7 +87,14 @@ impl Runner {
                                 self.input_mode = InputMode::Editing;
                             }
                             KeyCode::Char('q') => {
-                                return Ok(());
+                                return Ok(Score {
+                                    characters: 0,
+                                    mistakes: 0,
+                                    wpm: 0.0,
+                                    accuracy: 0.0,
+                                    uncorrected_mistakes: 0,
+                                    uncorrected_accuracy: 0.0,
+                                });
                             }
                             _ => {}
                         },
@@ -102,7 +121,7 @@ impl Runner {
         }
     }
 
-    fn render(&self, frame: &mut impl FrameWrapperInterface, time_elapsed: u64) {
+    fn render(&mut self, frame: &mut impl FrameWrapperInterface, time_elapsed: u64) {
         let areas = Layout::default()
             .direction(Direction::Vertical)
             .constraints([Constraint::Min(1), Constraint::Length(1)].as_ref())
@@ -200,7 +219,7 @@ impl Runner {
     }
 
     fn print_input(
-        &self,
+        &mut self,
         frame: &mut impl FrameWrapperInterface,
         expected_input: String,
         input_area: Rect,
@@ -209,12 +228,16 @@ impl Runner {
         for ((input_char_index, input_char), (_, expected_input_char)) in
             self.input.char_indices().zip(expected_input.char_indices())
         {
-            let input = Paragraph::new(expected_input_char.to_string()).style(
-                match input_char == expected_input_char {
-                    true => Style::default().fg(Color::Green),
-                    false => Style::default().bg(Color::Red).fg(Color::Gray),
-                },
-            );
+            let is_correct = input_char == expected_input_char;
+
+            if !is_correct {
+                self.mistakes += 1;
+            }
+
+            let input = Paragraph::new(expected_input_char.to_string()).style(match is_correct {
+                true => Style::default().fg(Color::Green),
+                false => Style::default().bg(Color::Red).fg(Color::Gray),
+            });
             frame.render_widget(
                 input,
                 Rect {
@@ -267,6 +290,25 @@ impl Runner {
                 area.x + input_current_line_len as u16,
                 area.y + current_line_index,
             ),
+        }
+    }
+
+    fn get_score(&self) -> Score {
+        let characters = self.input.chars().count() as u64;
+        let uncorrected_mistakes = self
+            .input
+            .chars()
+            .zip(self.expected_input.get_string(self.input.len()).chars())
+            .filter(|(input_char, expected_input_char)| input_char != expected_input_char)
+            .count() as u64;
+
+        Score {
+            characters,
+            wpm: characters as f64 / 5.0 * 60.0 / self.config.duration.as_secs() as f64,
+            mistakes: self.mistakes,
+            accuracy: 100.0 - self.mistakes as f64 / characters as f64 * 100.0,
+            uncorrected_mistakes,
+            uncorrected_accuracy: 100.0 - uncorrected_mistakes as f64 / characters as f64 * 100.0,
         }
     }
 }
