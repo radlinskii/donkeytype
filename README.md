@@ -4,7 +4,8 @@ very minimalistic **_cli_** typing test
 
 ### Todo
 
--   [ ] count & display & save results
+-   [ ] count wpm only in words that were typed correctly
+-   [ ] save results
 -   [ ] handle alt+backspace to delete last word from input
 -   [ ] support numbers and symbols
 -   [ ] figure out a way to mock tui::widgets::Widget to test if expected text is rendered
