@@ -6,15 +6,15 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-anyhow = "1.0.72"
+anyhow = "1.0.75"
 assert_cmd = "2.0.12"
-clap = { version = "4.3.15", features = ["derive"] }
-crossterm = "0.26.1"
+clap = { version = "4.4.3", features = ["derive"] }
+crossterm = "0.27.0"
 dirs = "5.0.1"
 mockall = "0.11.4"
 predicates = "3.0.3"
 rand = "0.8.5"
-serde = { version = "1.0.171", features = ["derive"] }
-serde_json = "1.0.103"
-tempfile = "3.7.0"
+serde = { version = "1.0.188", features = ["derive"] }
+serde_json = "1.0.107"
+tempfile = "3.8.0"
 tui = "0.19.0"
