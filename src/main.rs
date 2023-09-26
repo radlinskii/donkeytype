@@ -26,8 +26,8 @@ fn main() -> anyhow::Result<()> {
 
     let args = Args::parse();
     let config = Config::new(args, config_file_path).context("Unable to create config")?;
+    let duration = config.duration.as_secs();
     let expected_input = ExpectedInput::new(&config).context("Unable to create expected input")?;
-
     let mut terminal = configure_terminal().context("Unable to configure terminal")?;
 
     let mut app = Runner::new(config, expected_input);
@@ -35,13 +35,33 @@ fn main() -> anyhow::Result<()> {
 
     restore_terminal(terminal).context("Unable to restore terminal")?;
 
-    if let Err(err) = res {
-        println!("{:?}", err)
-    } else if let Ok(stats) = res {
-        println!("{:?}", stats);
-    }
+    match res {
+        Ok(stats) => {
+            println!("WPM: {}", stats.wpm);
+            println!("Raw accuracy: {:.2}%", stats.raw_accuracy);
+            println!("Raw valid characters: {}", stats.raw_valid_characters_count);
+            println!("Raw mistakes: {}", stats.raw_mistakes_count);
+            println!("Raw characters typed: {}", stats.raw_typed_characters_count);
+            println!("Accuracy after corrections: {:.2}%", stats.accuracy);
+            println!(
+                "Valid characters after corrections: {}",
+                stats.valid_characters_count
+            );
+            println!("Mistakes after corrections: {}", stats.mistakes_count);
+            println!(
+                "Characters typed after corrections: {}",
+                stats.typed_characters_count
+            );
+            println!("Time: {} seconds", duration);
 
-    Ok(())
+            Ok(())
+        }
+        Err(err) => {
+            println!("Error: {:?}", err);
+
+            Err(err)
+        }
+    }
 }
 
 fn configure_terminal() -> Result<Terminal<CrosstermBackend<io::Stdout>>, anyhow::Error> {

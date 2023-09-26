@@ -1,6 +1,6 @@
 use clap::Parser;
 
-/// cli typing test
+/// a very minimalistic cli typing test
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 pub struct Args {

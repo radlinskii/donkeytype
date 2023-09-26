@@ -24,19 +24,21 @@ pub struct Runner {
     input_mode: InputMode,
     config: Config,
     expected_input: Box<dyn ExpectedInputInterface>,
-    mistakes: u64,
-    valid_characters: u64,
+    raw_mistakes_count: u64,
+    raw_valid_characters_count: u64,
 }
 
 #[derive(Debug)]
 pub struct Stats {
     pub wpm: f64,
-    pub characters: u64,
-    pub valid_characters: u64,
-    pub mistakes: u64,
+    pub raw_accuracy: f64,
+    pub raw_valid_characters_count: u64,
+    pub raw_mistakes_count: u64,
+    pub raw_typed_characters_count: u64,
     pub accuracy: f64,
-    pub uncorrected_mistakes: u64,
-    pub uncorrected_accuracy: f64,
+    pub valid_characters_count: u64,
+    pub typed_characters_count: u64,
+    pub mistakes_count: u64,
 }
 
 impl Runner {
@@ -46,8 +48,8 @@ impl Runner {
             input_mode: InputMode::Normal,
             config,
             expected_input: Box::new(expected_input),
-            mistakes: 0,
-            valid_characters: 0,
+            raw_mistakes_count: 0,
+            raw_valid_characters_count: 0,
         }
     }
 
@@ -90,14 +92,17 @@ impl Runner {
                                 self.input_mode = InputMode::Editing;
                             }
                             KeyCode::Char('q') => {
+                                // todo return canceled test error and handle it in main
                                 return Ok(Stats {
                                     wpm: 0.0,
-                                    characters: 0,
-                                    valid_characters: 0,
-                                    mistakes: 0,
+                                    raw_accuracy: 0.0,
+                                    raw_valid_characters_count: 0,
+                                    raw_mistakes_count: 0,
+                                    raw_typed_characters_count: 0,
                                     accuracy: 0.0,
-                                    uncorrected_mistakes: 0,
-                                    uncorrected_accuracy: 0.0,
+                                    valid_characters_count: 0,
+                                    mistakes_count: 0,
+                                    typed_characters_count: 0,
                                 });
                             }
                             _ => {}
@@ -116,9 +121,9 @@ impl Runner {
                                     self.input.chars().last() == expected_input.last().copied();
 
                                 if !is_correct {
-                                    self.mistakes += 1;
+                                    self.raw_mistakes_count += 1;
                                 } else {
-                                    self.valid_characters += 1;
+                                    self.raw_valid_characters_count += 1;
                                 }
                             }
                             KeyCode::Backspace => {
@@ -309,23 +314,34 @@ impl Runner {
     }
 
     fn get_stats(&self) -> Stats {
-        let characters = self.input.chars().count() as u64;
-        let uncorrected_mistakes = self
-            .input
-            .chars()
-            .zip(self.expected_input.get_string(self.input.len()).chars())
+        let typed_characters = self.input.chars();
+        let typed_characters_count = typed_characters.clone().count();
+        let expected_input_str = self.expected_input.get_string(typed_characters_count);
+        let expected_characters = expected_input_str.chars();
+
+        let mistakes_count = typed_characters
+            .clone()
+            .zip(expected_characters.clone())
             .filter(|(input_char, expected_input_char)| input_char != expected_input_char)
             .count() as u64;
+        let valid_characters_count = typed_characters_count as u64 - mistakes_count;
 
         Stats {
-            wpm: characters as f64 / 5.0 * 60.0 / self.config.duration.as_secs() as f64,
-            characters,
-            valid_characters: self.valid_characters,
-            mistakes: self.mistakes,
-            accuracy: 100.0 - self.mistakes as f64 / self.valid_characters as f64 * 100.0,
-            uncorrected_mistakes,
-            uncorrected_accuracy: 100.0
-                - uncorrected_mistakes as f64 / self.valid_characters as f64 * 100.0,
+            wpm: valid_characters_count as f64 / 5.0 * 60.0 / self.config.duration.as_secs() as f64,
+
+            raw_accuracy: (self.raw_valid_characters_count) as f64
+                / (self.raw_valid_characters_count + self.raw_mistakes_count) as f64
+                * 100.0,
+            raw_valid_characters_count: self.raw_valid_characters_count,
+            raw_mistakes_count: self.raw_mistakes_count,
+            raw_typed_characters_count: self.raw_valid_characters_count + self.raw_mistakes_count,
+
+            accuracy: (typed_characters_count - mistakes_count as usize) as f64
+                / typed_characters_count as f64
+                * 100.0,
+            valid_characters_count,
+            mistakes_count,
+            typed_characters_count: typed_characters_count as u64,
         }
     }
 }
