@@ -5,6 +5,7 @@ use std::{fs, io::Read, path::PathBuf, time::Duration};
 
 use crate::Args;
 
+#[derive(Debug)]
 pub struct Config {
     pub duration: Duration,
     pub numbers: bool,

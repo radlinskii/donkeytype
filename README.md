@@ -38,15 +38,16 @@ Configuration will grow when more features are added (_different modes_, _differ
 
 Default config looks like this:
 
-| name            | default value        | type in JSON | description                                                          |
-| --------------- | -------------------- | ------------ | -------------------------------------------------------------------- |
+| name              | default value          | type in JSON | description                                                          |
+| ----------------- | ---------------------- | ------------ | -------------------------------------------------------------------- |
 | `duration`        | `30`                   | number       | duration of the test in seconds                                      |
+| `numbers`         | `false`                | boolean      | flag indicating if numbers should be inserted in expected input      |
 | `dictionary_path` | `"src/dict/words.txt"` | string       | dictionary words to sample from while creating test's expected input |
 
 You can provide this config as options when running the program like so:
 
 ```shell
-cargo run -- --duration 60 --dictionary-path "/usr/share/dict/words"
+cargo run -- --duration 60 --dictionary-path "/usr/share/dict/words" --numbers true
 ```
 
 or put them in a config file in `~/.config/donkeytype/donkeytype-config.json`:
@@ -54,7 +55,8 @@ or put them in a config file in `~/.config/donkeytype/donkeytype-config.json`:
 ```json
 {
     "duration": 60,
-    "dictionary_path": "/usr/share/dict/words"
+    "dictionary_path": "/usr/share/dict/words",
+    "numbers": false
 }
 ```
 

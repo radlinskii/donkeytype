@@ -1,6 +1,6 @@
 use anyhow::Context;
 use mockall::automock;
-use rand::{seq::SliceRandom, thread_rng};
+use rand::{seq::SliceRandom, thread_rng, Rng};
 use std::io::Read;
 
 use crate::config::Config;
@@ -10,6 +10,8 @@ pub struct ExpectedInput {
     str: String,
 }
 
+const NUMBERS_RATIO: f64 = 0.05;
+
 impl ExpectedInput {
     pub fn new(config: &Config) -> Result<Self, anyhow::Error> {
         let mut file = std::fs::File::open(config.dictionary_path.clone())
@@ -18,13 +20,44 @@ impl ExpectedInput {
         file.read_to_string(&mut str)
             .context("Unable to read dictionary file")?;
 
-        let mut str = str.split("\n").collect::<Vec<&str>>();
         let mut rng = thread_rng();
-        str.shuffle(&mut rng);
-        let str = str.join(" ").trim().to_string();
+        let mut str_vec = str.split("\n").collect::<Vec<&str>>();
+        let mut string_vec: Vec<String> = str_vec.iter().map(|s| s.to_string()).collect();
+        str_vec.shuffle(&mut rng);
+
+        if config.numbers == true {
+            replace_words_with_numbers(&mut string_vec, &mut rng, NUMBERS_RATIO);
+
+            str_vec = string_vec.iter().map(|s| s.as_str()).collect();
+            str_vec.shuffle(&mut rng);
+        }
+
+        let str = str_vec.join(" ").trim().to_string();
 
         Ok(Self { str })
     }
+}
+
+fn replace_words_with_numbers(
+    string_vec: &mut Vec<String>,
+    rng: &mut rand::rngs::ThreadRng,
+    numbers_ratio: f64,
+) {
+    let change_to_num_treshold = (numbers_ratio * string_vec.len() as f64).round() as usize;
+
+    *string_vec = string_vec
+        .iter()
+        .enumerate()
+        .map(|(index, word)| {
+            if index < change_to_num_treshold {
+                let random_digits: String = (0..word.len())
+                    .map(|_| rng.gen_range(b'0'..=b'9') as char)
+                    .collect();
+                return random_digits;
+            }
+            return word.to_string();
+        })
+        .collect();
 }
 
 #[automock]
@@ -64,7 +97,7 @@ mod tests {
             .expect("Unable to write to temp file");
         let config = Config {
             duration: Duration::from_secs(30),
-            numbers: true,
+            numbers: false,
             dictionary_path: config_file.path().to_path_buf(),
         };
 
@@ -89,5 +122,36 @@ mod tests {
         };
 
         assert_eq!(expected_input.get_string(11), "abc abc abc");
+    }
+
+    #[test]
+    fn should_replace_words_with_numbers() {
+        let mut string_vec = vec![
+            "item1".to_string(),
+            "item2".to_string(),
+            "item3".to_string(),
+            "item4".to_string(),
+            "item5".to_string(),
+            "item6".to_string(),
+            "item7".to_string(),
+            "item8".to_string(),
+        ];
+        let mut rng = thread_rng();
+        let numbers_ratio = 0.5;
+
+        replace_words_with_numbers(&mut string_vec, &mut rng, numbers_ratio);
+
+        let items_with_only_digits: Vec<&String> = string_vec
+            .iter()
+            .filter(|item| item.chars().all(|c| c.is_digit(10)))
+            .collect();
+
+        let change_to_num_treshold = (numbers_ratio * string_vec.len() as f64).round() as usize;
+        assert_eq!(change_to_num_treshold, 4);
+        assert_eq!(
+            items_with_only_digits.len(),
+            4,
+            "At least 4 items contain only digits"
+        );
     }
 }
