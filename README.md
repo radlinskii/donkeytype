@@ -2,23 +2,7 @@
 
 a _very_ minimalistic _cli_ typing test.
 
-### Todo
-
--   [ ] docs
--   [ ] add CONTRIBUTING.md
--   [ ] save results to csv
--   [ ] read results from csv and display them
--   [ ] deployment to homebrew?
--   [ ] count wpm only in words that were typed correctly
--   [ ] handle alt+backspace to delete last word from input
--   [ ] support uppercase letters at the beginning of words
--   [ ] support numbers
--   [ ] support symbols
--   [ ] support configuring color scheme
--   [ ] figure out a way to mock tui::widgets::Widget to test if expected text is rendered
--   [ ] handle unicode characters (e.g. `ł`, `ń`, `ü`, `ß`)
--   [ ] add support for more languages
--   [ ] add integration tests
+![donkeytype demonstration](https://github.com/radlinskii/donkeytype/assets/26116041/ecd835f5-e50b-4bc6-aea4-75f9ecde5de7)
 
 ## How it works
 
@@ -36,7 +20,7 @@ WPM (words per minute) is calculated as amount of typed characters divided by 5 
 
 ### Installation
 
-For now there is now deployment environment setup.
+For now there is no deployment environment setup.
 You can clone the repo, and run the main program with cargo:
 
 ```shell
@@ -45,29 +29,32 @@ cargo run
 
 To start the program with default config.
 
+> So far it was only tested on MacOS.
+
 ### Configuring
 
 For now there are only two options that are read from config.
-Configuration will grow when more features are added (different modes, different languages, configuring colors).
+Configuration will grow when more features are added (_different modes_, _different languages_, _configuring colors_).
 
 Default config looks like this:
 
 | name            | default value        | type in JSON | description                                                          |
 | --------------- | -------------------- | ------------ | -------------------------------------------------------------------- |
-| duration        | 30                   | number       | duration of the test in seconds                                      |
-| dictionary_path | "src/dict/words.txt" | string       | dictionary words to sample from while creating test's expected input |
+| `duration`        | `30`                   | number       | duration of the test in seconds                                      |
+| `dictionary_path` | `"src/dict/words.txt"` | string       | dictionary words to sample from while creating test's expected input |
 
 You can provide this config as options when running the program like so:
 
 ```shell
-cargo run -- --duration 60
+cargo run -- --duration 60 --dictionary-path "/usr/share/dict/words"
 ```
 
 or put them in a config file in `~/.config/donkeytype/donkeytype-config.json`:
 
 ```json
 {
-    "duration": 60
+    "duration": 60,
+    "dictionary_path": "/usr/share/dict/words"
 }
 ```
 
@@ -85,7 +72,26 @@ You need to have [rust](https://www.rust-lang.org/) installed to run & develop t
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md)
+Thank you for considering contributing to the project.
+
+### Suggesting a Feature or Enhancement
+
+If you have an idea for a new feature or enhancement, please share it. Follow these steps to suggest a feature:
+
+1. Check if your feature idea has already been proposed in the issue tracker.
+2. If it's not already there, open a new issue and describe the feature you'd like to see, why it's needed, and how you envision it working.
+
+### Codebase contribution
+
+To submit a contribution, follow these general steps:
+
+1. Create your own fork of the code repository.
+2. Make the desired changes in your fork.
+3. Ennsure your changes adhere to the code style and quality standards.
+
+### Hacktoberfest 2023
+
+If you found this repo because of [Hacktoberfest 2023](https://hacktoberfest.com/), make sure you familiarize yourself with [participation rules for contributors](https://hacktoberfest.com/participation/#contributors).
 
 ## License
 
