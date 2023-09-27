@@ -1,3 +1,53 @@
+//! a very minimalistic cli typing test.
+//!
+//! It shows an expected input in the terminal window of the user and measures how many characters
+//! user types in the given amount of time.
+//! WPM (words per minute) score is calculated as amount of typed characters divided by 5 (word)
+//! divided by the duration normalized to 60 seconds (minute).
+//!
+//! ## Usage
+//!
+//! To start a test simply run
+//!
+//! ```sh
+//! cargo run
+//! ```
+//!
+//! ## Configuration
+//!
+//!
+//! Default options of configuration are:
+//!
+//! | name              | default value          | type in JSON | description                                                          |
+//! | ----------------- | ---------------------- | ------------ | -------------------------------------------------------------------- |
+//! | `duration`        | `30`                   | number       | duration of the test in seconds                                      |
+//! | `numbers`         | `false`                | boolean      | flag indicating if numbers should be inserted in expected input      |
+//! | `dictionary_path` | `"src/dict/words.txt"` | string       | dictionary words to sample from while creating test's expected input |
+//!
+//! Configuration will grow when more features are added (_different modes_, _different languages_, _configuring colors_).
+//!
+//! You can provide this config as options when running the program like so:
+//!
+//! ```shell
+//! cargo run -- --duration 60 --dictionary-path "/usr/share/dict/words" --numbers true
+//! ```
+//!
+//! or put them in a config file in `~/.config/donkeytype/donkeytype-config.json`:
+//!
+//! ```json
+//! {
+//!     "duration": 60,
+//!     "dictionary_path": "/usr/share/dict/words",
+//!     "numbers": false
+//! }
+//! ```
+//!
+//! To get all the available options run
+//!
+//! ```shell
+//! cargo run -- --help
+//! ```
+
 mod args;
 mod config;
 mod expected_input;
@@ -17,6 +67,14 @@ use config::Config;
 use expected_input::ExpectedInput;
 use runner::Runner;
 
+/// main entry to the program
+/// - parses arguments,
+/// - reads config
+/// - creates expected input
+/// - prepares terminal window
+/// - starts the test
+/// - restores terminal configuration
+/// - prints and handles test results
 fn main() -> anyhow::Result<()> {
     let config_file_path = dirs::home_dir()
         .context("Unable to get home directory")?
@@ -64,6 +122,7 @@ fn main() -> anyhow::Result<()> {
     }
 }
 
+/// prepares terminal window for rendering using tui
 fn configure_terminal() -> Result<Terminal<CrosstermBackend<io::Stdout>>, anyhow::Error> {
     enable_raw_mode().context("Unable to enable raw mode")?;
     let mut stdout = io::stdout();
@@ -74,6 +133,7 @@ fn configure_terminal() -> Result<Terminal<CrosstermBackend<io::Stdout>>, anyhow
     Ok(terminal)
 }
 
+/// restores terminal window configuration
 fn restore_terminal(
     mut terminal: Terminal<CrosstermBackend<io::Stdout>>,
 ) -> Result<(), anyhow::Error> {

@@ -14,7 +14,7 @@ When test is running you can see how much time you have left in bottom-left corn
 
 You can pause the test by pressinng <Esc>, to resume it press `'e'` again.
 
-WPM (words per minute) is calculated as amount of typed characters divided by 5 (word), divided by the duration normalized to 60 seconds (minute).
+WPM (words per minute) score is calculated as amount of typed characters divided by 5 (word), divided by the duration normalized to 60 seconds (minute).
 
 ## Usage
 
@@ -33,7 +33,7 @@ To start the program with default config.
 
 ### Configuring
 
-For now there are only two options that are read from config.
+For now there are only three options that are read from config.
 Configuration will grow when more features are added (_different modes_, _different languages_, _configuring colors_).
 
 Default config looks like this:

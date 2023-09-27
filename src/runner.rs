@@ -1,3 +1,16 @@
+//! Test runner module. Controles the test flow, checks input, and returns results.
+//!
+//! This is the main module that is orchestrating the flow of the test.
+//! It prints the expected input as placeholder, then it reads user input and reacts to it.
+//! When program is started `Normal` mode is turned on.
+//! To go to `Editing` mode user needs to press `e`.
+//! To go to `Normal` mode from `Editing` mode, and effectively pause the test, press `<Esc>`.
+//!
+//! When a test is started it checks the user input
+//! and prints it to indicate valid characters and mistakes.
+//! After the `duration` (amount of seconds) specified in config has passed the test is finished.
+//! And test statistics are returned from the runner.
+
 use anyhow::{Context, Result};
 use crossterm::event::{self, Event, KeyCode};
 use mockall::automock;
@@ -14,11 +27,14 @@ use tui::{
 use crate::config::Config;
 use crate::expected_input::ExpectedInputInterface;
 
+/// To switch from Normal to Editing press `e`.
+/// To switch from Editing to Normal press `<Esc>`.
 enum InputMode {
     Normal,
     Editing,
 }
 
+/// Struct that runs and controlles the test.
 pub struct Runner {
     input: String,
     input_mode: InputMode,
@@ -28,6 +44,7 @@ pub struct Runner {
     raw_valid_characters_count: u64,
 }
 
+/// Struct holding the test results.
 #[derive(Debug)]
 pub struct Stats {
     pub wpm: f64,
@@ -42,6 +59,7 @@ pub struct Stats {
 }
 
 impl Runner {
+    /// Create new test runner instance
     pub fn new(config: Config, expected_input: impl ExpectedInputInterface + 'static) -> Self {
         Self {
             input: String::new(),
@@ -53,6 +71,9 @@ impl Runner {
         }
     }
 
+    /// Method that runs the test.
+    ///
+    /// It renders the application using the `tui` crate and reacts to user input.
     pub fn run<B: Backend>(&mut self, terminal: &mut Terminal<B>) -> Result<Stats> {
         let mut start_time = Instant::now();
         let mut pause_time = Instant::now();
@@ -145,6 +166,11 @@ impl Runner {
         }
     }
 
+    /// Render a frame with each visual elements of the program in terminal.
+    ///
+    /// There are two areas being rendered,
+    /// input area - where user input and expected input is displayed,
+    /// and info arae - where help message and time remaining is rendered.
     fn render(&mut self, frame: &mut impl FrameWrapperInterface, time_elapsed: u64) {
         let areas = Layout::default()
             .direction(Direction::Vertical)
@@ -242,6 +268,8 @@ impl Runner {
         )
     }
 
+    /// Iterate over characters in user input
+    /// and print them using different colors indicating if they are valid or wrong.
     fn print_input(
         &mut self,
         frame: &mut impl FrameWrapperInterface,
@@ -270,6 +298,7 @@ impl Runner {
         }
     }
 
+    /// Used for rendering text within given area and adjusted with given color.
     fn print_block_of_text(
         &self,
         frame: &mut impl FrameWrapperInterface,
@@ -294,6 +323,7 @@ impl Runner {
         frame.render_widget(paragraph, area);
     }
 
+    /// Move the user cursor to place after the end of user input.
     fn move_cursor(
         &self,
         frame: &mut impl FrameWrapperInterface,
@@ -313,6 +343,27 @@ impl Runner {
         }
     }
 
+    /// Calculate the statistics of the test and return them.
+    ///
+    /// WPM is number of valid characters that are in the input after the test has finished
+    /// divided by 5, to get the "number of words typed", and divided by the duration of the test
+    /// normalized to 60 seconds.
+    /// This way WPM is only counted in valid characters, so each mistake that wasn't corrected is
+    /// not taken into consideration when calculating it.
+    ///
+    /// `raw_valid_characters_count` is number of times when valid character was pressed.
+    /// `raw_mistakes_count is number` of times when invalid character was pressed.
+    /// `raw_typed_characters_count` is number of key presses that happened in `Edting` mode during
+    /// the test.
+    /// `raw_accuracy` is ratio of `raw_valid_characters_count` to `raw_typed_characters_count`.
+    ///
+    /// `valid_characters_count`is number of valid characters in the input after the test has
+    /// finished, so if any corrections where made, it will consider the state of the input after
+    /// them.
+    /// `mistakes_count` is number of invalid characters in the input after the test has finished.
+    /// `typed_characters_count` is number of characters in the input after the test has finished.
+    /// `accuracy` is ratio of `valid_characters_count` to `typed_characters_count`.
+    ///
     fn get_stats(&self) -> Stats {
         let typed_characters = self.input.chars();
         let typed_characters_count = typed_characters.clone().count();
@@ -346,6 +397,7 @@ impl Runner {
     }
 }
 
+/// Used for generating mocks using `mockall` crate
 #[automock]
 trait FrameWrapperInterface {
     fn render_widget<W: Widget + 'static>(&mut self, widget: W, area: Rect);
@@ -353,6 +405,7 @@ trait FrameWrapperInterface {
     fn size(&self) -> Rect;
 }
 
+/// Used for generating mocks using `mockall` crate
 pub struct FrameWrapper<'a, 'b, B: Backend> {
     frame: &'a mut Frame<'b, B>,
 }

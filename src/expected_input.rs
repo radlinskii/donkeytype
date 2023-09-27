@@ -1,3 +1,12 @@
+//! Module creating the expected input for the test runner
+//!
+//! It reads dictionary file to get list of words
+//! then shuffles this list
+//! optionally replaces words with numbers if flag `numbers` is set to true in config
+//! and returns as a string
+//!
+//! Dictionary file should be a text file in format of single words per line.
+
 use anyhow::Context;
 use mockall::automock;
 use rand::{seq::SliceRandom, thread_rng, Rng};
@@ -5,14 +14,24 @@ use std::io::Read;
 
 use crate::config::Config;
 
+/// Struct used by runner to hold generate the text used for validation and as a placeholder
 #[derive(Debug)]
 pub struct ExpectedInput {
     str: String,
 }
 
+// todo: move it to config, read it from config file or args as other config options
+/// If `numbers` option in config is set to `true` specifies what should be the ratio of numbers to
+/// normal words in expected input.
+/// Should be a floating point value between 0 and 1.
 const NUMBERS_RATIO: f64 = 0.05;
 
 impl ExpectedInput {
+    /// Create new struct instance by reading the dictionary file
+    ///
+    /// After reading the file shuffle its content
+    /// then replace some words with numbers if specified in config
+    /// then save one long string to memory
     pub fn new(config: &Config) -> Result<Self, anyhow::Error> {
         let mut file = std::fs::File::open(config.dictionary_path.clone())
             .context("Unable to open dictionary file")?;
@@ -38,6 +57,11 @@ impl ExpectedInput {
     }
 }
 
+/// In given vector of words replace some of them
+///
+/// with words consisting only of numbers
+/// number_ratio should be between [0, 1.0]
+/// and tells how many percent of words should become numbers
 fn replace_words_with_numbers(
     string_vec: &mut Vec<String>,
     rng: &mut rand::rngs::ThreadRng,
@@ -60,12 +84,17 @@ fn replace_words_with_numbers(
         .collect();
 }
 
+/// extracted to trait to create mock with `mockall` crate
 #[automock]
 pub trait ExpectedInputInterface {
     fn get_string(&self, len: usize) -> String;
 }
 
 impl ExpectedInputInterface for ExpectedInput {
+    /// Cuts string saved in ExpectedInput at specified length instance and returns it
+    ///
+    /// If string is shorter than the specified length it repeats it enough times for it to be long
+    /// enough.
     fn get_string(&self, len: usize) -> String {
         let s = self.str.clone() + " ";
         let s = s.repeat(len / s.len() + 1);

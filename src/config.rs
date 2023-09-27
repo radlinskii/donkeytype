@@ -1,3 +1,31 @@
+//! Module reading and parsing config
+//!
+//! Default options of configuration are:
+//!
+//! | name              | default value          | type in JSON | description                                                          |
+//! | ----------------- | ---------------------- | ------------ | -------------------------------------------------------------------- |
+//! | `duration`        | `30`                   | number       | duration of the test in seconds                                      |
+//! | `numbers`         | `false`                | boolean      | flag indicating if numbers should be inserted in expected input      |
+//! | `dictionary_path` | `"src/dict/words.txt"` | string       | dictionary words to sample from while creating test's expected input |
+//!
+//! Configuration will grow when more features are added (_different modes_, _different languages_, _configuring colors_).
+//!
+//! You can provide this config as options when running the program like so:
+//!
+//! ```shell
+//! cargo run -- --duration 60 --dictionary-path "/usr/share/dict/words" --numbers true
+//! ```
+//!
+//! or put them in a config file in `~/.config/donkeytype/donkeytype-config.json`:
+//!
+//! ```json
+//! {
+//!     "duration": 60,
+//!     "dictionary_path": "/usr/share/dict/words",
+//!     "numbers": false
+//! }
+//! ```
+
 use anyhow::{Context, Result};
 use mockall::*;
 use serde::{Deserialize, Serialize};
@@ -5,6 +33,7 @@ use std::{fs, io::Read, path::PathBuf, time::Duration};
 
 use crate::Args;
 
+/// Main program configuration
 #[derive(Debug)]
 pub struct Config {
     pub duration: Duration,
@@ -12,6 +41,7 @@ pub struct Config {
     pub dictionary_path: PathBuf,
 }
 
+/// Used by `serde` crate to parse config file into a rust struct
 #[derive(Deserialize, Serialize, Debug)]
 struct ConfigFile {
     pub duration: Option<u64>,
@@ -21,7 +51,7 @@ struct ConfigFile {
 
 #[automock]
 impl Config {
-    #[allow(dead_code)]
+    /// Provide default values for configuration options
     pub fn default() -> Self {
         Self {
             duration: Duration::from_secs(30),
@@ -30,6 +60,11 @@ impl Config {
         }
     }
 
+    /// Setup configuration
+    ///
+    /// Create config with default values
+    /// then overwrite them with any values provided in config file
+    /// then overwrite it again with any values provide as arguments to the program
     pub fn new(args: Args, config_file_path: PathBuf) -> Result<Self> {
         let config = {
             let mut config = Self::default();
@@ -49,6 +84,7 @@ impl Config {
     }
 }
 
+/// Overwrite provided config with options parsed from configuration file
 fn augment_config_with_config_file(config: &mut Config, mut config_file: fs::File) -> Result<()> {
     if config_file.metadata().is_ok() {
         let mut config_file_content = String::new();
@@ -84,6 +120,7 @@ fn open_config_file_if_exists(config_file: PathBuf) -> Result<Option<fs::File>> 
     return Ok(None);
 }
 
+/// Overwrite provided config with values from args object
 fn augment_config_with_args(config: &mut Config, args: Args) {
     if let Some(numbers_flag) = args.numbers {
         config.numbers = numbers_flag;

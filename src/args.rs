@@ -1,8 +1,11 @@
+//! Module with available arguments to the program
+//!
+//! Using `clap` crate for parsing the arguments
+
 use clap::Parser;
 
-/// a very minimalistic cli typing test
 #[derive(Parser, Debug)]
-#[command(author, version, about, long_about = None)]
+#[command(author, version, about = "donkeytype - a very minimalistic cli typing test", long_about = None)]
 pub struct Args {
     /// duration of the test in seconds
     #[arg(short, long)]
