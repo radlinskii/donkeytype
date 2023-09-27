@@ -37,7 +37,7 @@ fn main() -> anyhow::Result<()> {
 
     match res {
         Ok(stats) => {
-            println!("WPM: {}", stats.wpm);
+            println!("WPM: {:.2}", stats.wpm);
             println!("Raw accuracy: {:.2}%", stats.raw_accuracy);
             println!("Raw valid characters: {}", stats.raw_valid_characters_count);
             println!("Raw mistakes: {}", stats.raw_mistakes_count);
