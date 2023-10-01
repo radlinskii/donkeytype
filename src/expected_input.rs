@@ -20,12 +20,6 @@ pub struct ExpectedInput {
     str: String,
 }
 
-// todo: move it to config, read it from config file or args as other config options
-/// If `numbers` option in config is set to `true` specifies what should be the ratio of numbers to
-/// normal words in expected input.
-/// Should be a floating point value between 0 and 1.
-const NUMBERS_RATIO: f64 = 0.05;
-
 impl ExpectedInput {
     /// Create new struct instance by reading the dictionary file
     ///
@@ -45,7 +39,7 @@ impl ExpectedInput {
         str_vec.shuffle(&mut rng);
 
         if config.numbers == true {
-            replace_words_with_numbers(&mut string_vec, &mut rng, NUMBERS_RATIO);
+            replace_words_with_numbers(&mut string_vec, &mut rng, config.numbers_ratio);
 
             str_vec = string_vec.iter().map(|s| s.as_str()).collect();
             str_vec.shuffle(&mut rng);
