@@ -6,14 +6,18 @@
 //! | ----------------- | ---------------------- | ------------ | -------------------------------------------------------------------- |
 //! | `duration`        | `30`                   | number       | duration of the test in seconds                                      |
 //! | `numbers`         | `false`                | boolean      | flag indicating if numbers should be inserted in expected input      |
+//! | `numbers_ratio`   | `0.05` if numbers=TRUE | number       | ratio for putting numbers in the test                                |
 //! | `dictionary_path` | `"src/dict/words.txt"` | string       | dictionary words to sample from while creating test's expected input |
+//! 
+//! `NOTE: If provided numbers_ratio is not between 0 to 1.0, Default numbers_ratio = 0.05 will be used.`
+//!
 //!
 //! Configuration will grow when more features are added (_different modes_, _different languages_, _configuring colors_).
 //!
 //! You can provide this config as options when running the program like so:
 //!
 //! ```shell
-//! cargo run -- --duration 60 --dictionary-path "/usr/share/dict/words" --numbers true
+//! cargo run -- --duration 60 --dictionary-path "/usr/share/dict/words" --numbers true --numbers-ratio 0.1
 //! ```
 //!
 //! or put them in a config file in `~/.config/donkeytype/donkeytype-config.json`:
@@ -22,7 +26,8 @@
 //! {
 //!     "duration": 60,
 //!     "dictionary_path": "/usr/share/dict/words",
-//!     "numbers": false
+//!     "numbers": true,
+//!     "numbers_ratio": 0.1
 //! }
 //! ```
 
@@ -38,6 +43,7 @@ use crate::Args;
 pub struct Config {
     pub duration: Duration,
     pub numbers: bool,
+    pub numbers_ratio: f64,
     pub dictionary_path: PathBuf,
 }
 
@@ -46,6 +52,7 @@ pub struct Config {
 struct ConfigFile {
     pub duration: Option<u64>,
     pub numbers: Option<bool>,
+    pub numbers_ratio: Option<f64>,
     pub dictionary_path: Option<String>,
 }
 
@@ -56,6 +63,7 @@ impl Config {
         Self {
             duration: Duration::from_secs(30),
             numbers: false,
+            numbers_ratio: 0.05,
             dictionary_path: PathBuf::from("src/dict/words.txt"),
         }
     }
@@ -103,6 +111,12 @@ fn augment_config_with_config_file(config: &mut Config, mut config_file: fs::Fil
             config.numbers = numbers;
         }
 
+        if let Some(numbers_ratio) = config_from_file.numbers_ratio {
+            if numbers_ratio >= 0.0 && numbers_ratio <= 1.0 {
+                config.numbers_ratio = numbers_ratio
+            }
+        }
+
         if let Some(dictionary_path) = config_from_file.dictionary_path {
             config.dictionary_path = PathBuf::from(dictionary_path);
         }
@@ -125,6 +139,11 @@ fn augment_config_with_args(config: &mut Config, args: Args) {
     if let Some(numbers_flag) = args.numbers {
         config.numbers = numbers_flag;
     }
+    if let Some(numbers_ratio) = args.numbers_ratio {
+        if numbers_ratio >= 0.0 && numbers_ratio <= 1.0 {
+            config.numbers_ratio = numbers_ratio
+        }
+    }   
     if let Some(duration) = args.duration {
         config.duration = Duration::from_secs(duration);
     }
@@ -145,6 +164,7 @@ mod tests {
 
         assert_eq!(config.duration, Duration::from_secs(30));
         assert_eq!(config.numbers, false);
+        assert_eq!(config.numbers_ratio, 0.05);
     }
 
     #[test]
@@ -152,12 +172,14 @@ mod tests {
         let args = Args {
             duration: None,
             numbers: None,
+            numbers_ratio: None,
             dictionary_path: None,
         };
         let config = Config::new(args, PathBuf::new()).expect("Unable to create config");
 
         assert_eq!(config.duration, Duration::from_secs(30));
         assert_eq!(config.numbers, false);
+        assert_eq!(config.numbers_ratio, 0.05);
     }
 
     #[test]
@@ -170,6 +192,7 @@ mod tests {
         let args = Args {
             duration: None,
             numbers: None,
+            numbers_ratio: None,
             dictionary_path: None,
         };
         let config =
@@ -177,6 +200,7 @@ mod tests {
 
         assert_eq!(config.duration, Duration::from_secs(10));
         assert_eq!(config.numbers, true);
+        assert_eq!(config.numbers_ratio, 0.05);
     }
 
     #[test]
@@ -184,12 +208,14 @@ mod tests {
         let args = Args {
             duration: Some(10),
             numbers: Some(true),
+            numbers_ratio: None,
             dictionary_path: None,
         };
         let config = Config::new(args, PathBuf::new()).expect("Unable to create config");
 
         assert_eq!(config.duration, Duration::from_secs(10));
         assert_eq!(config.numbers, true);
+        assert_eq!(config.numbers_ratio, 0.05);
     }
 
     #[test]
@@ -202,6 +228,7 @@ mod tests {
         let args = Args {
             duration: Some(20),
             numbers: Some(false),
+            numbers_ratio: None,
             dictionary_path: Some(String::from("/etc/dict/words")),
         };
         let config =
@@ -209,6 +236,7 @@ mod tests {
 
         assert_eq!(config.duration, Duration::from_secs(20));
         assert_eq!(config.numbers, false);
+        assert_eq!(config.numbers_ratio, 0.05);
         assert_eq!(config.dictionary_path, PathBuf::from("/etc/dict/words"));
     }
 }

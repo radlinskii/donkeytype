@@ -42,7 +42,12 @@ Default config looks like this:
 | ----------------- | ---------------------- | ------------ | -------------------------------------------------------------------- |
 | `duration`        | `30`                   | number       | duration of the test in seconds                                      |
 | `numbers`         | `false`                | boolean      | flag indicating if numbers should be inserted in expected input      |
+| `numbers_ratio`   | `0.05` if numbers=TRUE | number       | ratio for putting numbers in the test                                |
 | `dictionary_path` | `"src/dict/words.txt"` | string       | dictionary words to sample from while creating test's expected input |
+ 
+`NOTE: If provided numbers_ratio is not between 0 to 1.0, Default numbers_ratio = 0.05 will be used.`
+
+
 
 You can provide this config as options when running the program like so:
 
