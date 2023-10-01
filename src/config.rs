@@ -164,6 +164,7 @@ mod tests {
 
         assert_eq!(config.duration, Duration::from_secs(30));
         assert_eq!(config.numbers, false);
+        assert_eq!(config.numbers_ratio, 0.05);
     }
 
     #[test]
@@ -171,12 +172,14 @@ mod tests {
         let args = Args {
             duration: None,
             numbers: None,
+            numbers_ratio: None,
             dictionary_path: None,
         };
         let config = Config::new(args, PathBuf::new()).expect("Unable to create config");
 
         assert_eq!(config.duration, Duration::from_secs(30));
         assert_eq!(config.numbers, false);
+        assert_eq!(config.numbers_ratio, 0.05);
     }
 
     #[test]
@@ -189,6 +192,7 @@ mod tests {
         let args = Args {
             duration: None,
             numbers: None,
+            numbers_ratio: None,
             dictionary_path: None,
         };
         let config =
@@ -196,6 +200,7 @@ mod tests {
 
         assert_eq!(config.duration, Duration::from_secs(10));
         assert_eq!(config.numbers, true);
+        assert_eq!(config.numbers_ratio, 0.05);
     }
 
     #[test]
@@ -203,12 +208,14 @@ mod tests {
         let args = Args {
             duration: Some(10),
             numbers: Some(true),
+            numbers_ratio: None,
             dictionary_path: None,
         };
         let config = Config::new(args, PathBuf::new()).expect("Unable to create config");
 
         assert_eq!(config.duration, Duration::from_secs(10));
         assert_eq!(config.numbers, true);
+        assert_eq!(config.numbers_ratio, 0.05);
     }
 
     #[test]
@@ -221,6 +228,7 @@ mod tests {
         let args = Args {
             duration: Some(20),
             numbers: Some(false),
+            numbers_ratio: None,
             dictionary_path: Some(String::from("/etc/dict/words")),
         };
         let config =
@@ -228,6 +236,7 @@ mod tests {
 
         assert_eq!(config.duration, Duration::from_secs(20));
         assert_eq!(config.numbers, false);
+        assert_eq!(config.numbers_ratio, 0.05);
         assert_eq!(config.dictionary_path, PathBuf::from("/etc/dict/words"));
     }
 }

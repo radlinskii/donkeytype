@@ -121,6 +121,7 @@ mod tests {
         let config = Config {
             duration: Duration::from_secs(30),
             numbers: false,
+            numbers_ratio: 0.05,
             dictionary_path: config_file.path().to_path_buf(),
         };
 
