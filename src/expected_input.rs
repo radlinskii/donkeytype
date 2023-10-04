@@ -48,7 +48,7 @@ impl ExpectedInput {
         }
 
         if config.uppercase == true {
-            let uppercase_string_vec = create_uppercase_words(&string_vec, words_start_pos);
+            let uppercase_string_vec = create_uppercase_words(&string_vec, words_start_pos, config.uppercase_ratio);
             string_vec = uppercase_string_vec;
             str_vec = string_vec.iter().map(|s| s.as_str()).collect();
         }
@@ -90,10 +90,9 @@ fn replace_words_with_numbers(
     return change_to_num_treshold - 1
 }
 
-fn create_uppercase_words (string_vec: &Vec<String>, pos: usize) -> Vec<String> {
+fn create_uppercase_words (string_vec: &Vec<String>, pos: usize, uppercase_ratio: f64) -> Vec<String> {
     let mut string_vec2 = string_vec.clone();
-    let num_uppercase_words = string_vec2[pos..].len() as usize;
-    
+    let num_uppercase_words = (uppercase_ratio * string_vec2[pos..].len() as f64).round() as usize;
     for i in pos..pos+num_uppercase_words{
         if string_vec2[i] != ""{
             let mut v: Vec<char> = string_vec2[i].chars().collect();
@@ -150,7 +149,8 @@ mod tests {
             numbers: false,
             numbers_ratio: 0.05,
             dictionary_path: config_file.path().to_path_buf(),
-            uppercase: false
+            uppercase: false,
+            uppercase_ratio: 0.45
         };
 
         let expected_input = ExpectedInput::new(&config).expect("unable to create expected input");
