@@ -45,6 +45,7 @@ pub struct Config {
     pub numbers: bool,
     pub numbers_ratio: f64,
     pub dictionary_path: PathBuf,
+    pub uppercase: bool
 }
 
 /// Used by `serde` crate to parse config file into a rust struct
@@ -54,6 +55,7 @@ struct ConfigFile {
     pub numbers: Option<bool>,
     pub numbers_ratio: Option<f64>,
     pub dictionary_path: Option<String>,
+    pub uppercase: Option<bool>
 }
 
 #[automock]
@@ -65,6 +67,7 @@ impl Config {
             numbers: false,
             numbers_ratio: 0.05,
             dictionary_path: PathBuf::from("src/dict/words.txt"),
+            uppercase: false
         }
     }
 
@@ -120,6 +123,10 @@ fn augment_config_with_config_file(config: &mut Config, mut config_file: fs::Fil
         if let Some(dictionary_path) = config_from_file.dictionary_path {
             config.dictionary_path = PathBuf::from(dictionary_path);
         }
+
+        if let Some(uppercase) = config_from_file.uppercase {
+            config.uppercase = uppercase;
+        }
     }
 
     Ok(())
@@ -150,6 +157,10 @@ fn augment_config_with_args(config: &mut Config, args: Args) {
     if let Some(dictionary_path) = args.dictionary_path {
         config.dictionary_path = PathBuf::from(dictionary_path);
     }
+
+    if let Some(uppercase_flag) = args.uppercase {
+        config.uppercase = uppercase_flag
+    }
 }
 
 #[cfg(test)]
@@ -174,6 +185,7 @@ mod tests {
             numbers: None,
             numbers_ratio: None,
             dictionary_path: None,
+            uppercase: None
         };
         let config = Config::new(args, PathBuf::new()).expect("Unable to create config");
 
@@ -194,6 +206,7 @@ mod tests {
             numbers: None,
             numbers_ratio: None,
             dictionary_path: None,
+            uppercase: None
         };
         let config =
             Config::new(args, config_file.path().to_path_buf()).expect("Unable to create config");
@@ -210,6 +223,7 @@ mod tests {
             numbers: Some(true),
             numbers_ratio: None,
             dictionary_path: None,
+            uppercase: None
         };
         let config = Config::new(args, PathBuf::new()).expect("Unable to create config");
 
@@ -230,6 +244,7 @@ mod tests {
             numbers: Some(false),
             numbers_ratio: None,
             dictionary_path: Some(String::from("/etc/dict/words")),
+            uppercase: None
         };
         let config =
             Config::new(args, config_file.path().to_path_buf()).expect("Unable to create config");
