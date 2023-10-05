@@ -56,8 +56,11 @@ mod runner;
 use anyhow::{Context, Result};
 use clap::Parser;
 use crossterm::{
+    event::{KeyboardEnhancementFlags, PopKeyboardEnhancementFlags, PushKeyboardEnhancementFlags},
     execute,
-    terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
+    terminal::{
+        self, disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen,
+    },
 };
 use std::io;
 use tui::{backend::CrosstermBackend, Terminal};
@@ -126,6 +129,17 @@ fn main() -> anyhow::Result<()> {
 fn configure_terminal() -> Result<Terminal<CrosstermBackend<io::Stdout>>, anyhow::Error> {
     enable_raw_mode().context("Unable to enable raw mode")?;
     let mut stdout = io::stdout();
+    if matches!(terminal::supports_keyboard_enhancement(), Ok(true)) {
+        execute!(
+            stdout,
+            PushKeyboardEnhancementFlags(
+                KeyboardEnhancementFlags::DISAMBIGUATE_ESCAPE_CODES
+                    | KeyboardEnhancementFlags::REPORT_ALTERNATE_KEYS
+            )
+        )
+        .context("Unable to push keyboard enhancement flags")?;
+    }
+
     execute!(stdout, EnterAlternateScreen).context("Unable to enter alternate screen")?;
     let backend = CrosstermBackend::new(stdout);
     let terminal = Terminal::new(backend).context("Unable to create terminal")?;
@@ -138,6 +152,11 @@ fn restore_terminal(
     mut terminal: Terminal<CrosstermBackend<io::Stdout>>,
 ) -> Result<(), anyhow::Error> {
     disable_raw_mode().context("Unable to disable raw mode")?;
+    if matches!(terminal::supports_keyboard_enhancement(), Ok(true)) {
+        execute!(terminal.backend_mut(), PopKeyboardEnhancementFlags)
+            .context("Unable to pop keyboard enhancement flags")?;
+    }
+
     execute!(terminal.backend_mut(), LeaveAlternateScreen)
         .context("Unable to leave alternate screen")?;
     terminal.show_cursor().context("Unable to show cursor")?;
