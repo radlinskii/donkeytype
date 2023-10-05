@@ -22,4 +22,13 @@ pub struct Args {
     /// path to dictionary file
     #[arg(long)]
     pub dictionary_path: Option<String>,
+
+    /// indicates if test should include words beginning with uppercase letters
+    #[arg(short, long)]
+    pub uppercase: Option<bool>,
+
+    /// uppercase-ratio argument
+    #[arg(long)]
+    pub uppercase_ratio: Option<f64>,
+    
 }

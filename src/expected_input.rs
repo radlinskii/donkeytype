@@ -38,12 +38,21 @@ impl ExpectedInput {
         let mut string_vec: Vec<String> = str_vec.iter().map(|s| s.to_string()).collect();
         str_vec.shuffle(&mut rng);
 
-        if config.numbers == true {
-            replace_words_with_numbers(&mut string_vec, &mut rng, config.numbers_ratio);
+        // creating a pointer which points to where the words starts in the vector to help with uppercase words since we replace
+        // words in the beginning with numbers when numbers are enabled.
+        let mut words_start_pos:usize = 0;
 
+        if config.numbers == true {
+            words_start_pos = replace_words_with_numbers(&mut string_vec, &mut rng, config.numbers_ratio);
             str_vec = string_vec.iter().map(|s| s.as_str()).collect();
-            str_vec.shuffle(&mut rng);
         }
+
+        if config.uppercase == true {
+            create_uppercase_words(&mut string_vec, words_start_pos, config.uppercase_ratio);
+            str_vec = string_vec.iter().map(|s| s.as_str()).collect();
+        }
+
+        str_vec.shuffle(&mut rng);
 
         let str = str_vec.join(" ").trim().to_string();
 
@@ -60,7 +69,7 @@ fn replace_words_with_numbers(
     string_vec: &mut Vec<String>,
     rng: &mut rand::rngs::ThreadRng,
     numbers_ratio: f64,
-) {
+) -> usize {
     let change_to_num_treshold = (numbers_ratio * string_vec.len() as f64).round() as usize;
 
     *string_vec = string_vec
@@ -76,6 +85,21 @@ fn replace_words_with_numbers(
             return word.to_string();
         })
         .collect();
+
+    return change_to_num_treshold - 1
+}
+
+fn create_uppercase_words (string_vec: &mut Vec<String>, pos: usize, uppercase_ratio: f64) {
+    // let mut string_vec2 = string_vec.clone();
+    let num_uppercase_words = (uppercase_ratio * string_vec[pos..].len() as f64).round() as usize;
+    for i in pos..pos+num_uppercase_words{
+        if string_vec[i] != ""{
+            let mut v: Vec<char> = string_vec[i].chars().collect();
+            v[0] = v[0].to_uppercase().nth(0).unwrap();
+            let s: String = v.into_iter().collect();
+            string_vec[i] = s;
+        }    
+    }
 }
 
 /// extracted to trait to create mock with `mockall` crate
@@ -123,6 +147,8 @@ mod tests {
             numbers: false,
             numbers_ratio: 0.05,
             dictionary_path: config_file.path().to_path_buf(),
+            uppercase: false,
+            uppercase_ratio: 0.45
         };
 
         let expected_input = ExpectedInput::new(&config).expect("unable to create expected input");
