@@ -48,8 +48,7 @@ impl ExpectedInput {
         }
 
         if config.uppercase == true {
-            let uppercase_string_vec = create_uppercase_words(&string_vec, words_start_pos, config.uppercase_ratio);
-            string_vec = uppercase_string_vec;
+            create_uppercase_words(&mut string_vec, words_start_pos, config.uppercase_ratio);
             str_vec = string_vec.iter().map(|s| s.as_str()).collect();
         }
 
@@ -90,18 +89,17 @@ fn replace_words_with_numbers(
     return change_to_num_treshold - 1
 }
 
-fn create_uppercase_words (string_vec: &Vec<String>, pos: usize, uppercase_ratio: f64) -> Vec<String> {
-    let mut string_vec2 = string_vec.clone();
-    let num_uppercase_words = (uppercase_ratio * string_vec2[pos..].len() as f64).round() as usize;
+fn create_uppercase_words (string_vec: &mut Vec<String>, pos: usize, uppercase_ratio: f64) {
+    // let mut string_vec2 = string_vec.clone();
+    let num_uppercase_words = (uppercase_ratio * string_vec[pos..].len() as f64).round() as usize;
     for i in pos..pos+num_uppercase_words{
-        if string_vec2[i] != ""{
-            let mut v: Vec<char> = string_vec2[i].chars().collect();
+        if string_vec[i] != ""{
+            let mut v: Vec<char> = string_vec[i].chars().collect();
             v[0] = v[0].to_uppercase().nth(0).unwrap();
             let s: String = v.into_iter().collect();
-            string_vec2[i] = s;
+            string_vec[i] = s;
         }    
     }
-    return string_vec2;
 }
 
 /// extracted to trait to create mock with `mockall` crate
