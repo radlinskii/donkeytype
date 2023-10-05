@@ -12,7 +12,7 @@
 //! And test statistics are returned from the runner.
 
 use anyhow::{Context, Result};
-use crossterm::event::{self, Event, KeyCode};
+use crossterm::event::{self, Event, KeyCode, KeyModifiers};
 use mockall::automock;
 use std::time::{Duration, Instant};
 use tui::{
@@ -68,6 +68,18 @@ impl Runner {
             expected_input: Box::new(expected_input),
             raw_mistakes_count: 0,
             raw_valid_characters_count: 0,
+        }
+    }
+
+    /// Removes the last word from user input
+    fn remove_last_word(&mut self) {
+        let mut words = self.input.split_whitespace().collect::<Vec<&str>>();
+        words.pop();
+
+        self.input = words.join(" ");
+
+        if !self.input.is_empty() {
+            self.input.push(' ');
         }
     }
 
@@ -129,6 +141,13 @@ impl Runner {
                             _ => {}
                         },
                         InputMode::Editing => match key.code {
+                            // Crossterm returns `ctrl+w` or ``ctrl+h` when `ctrl+backspace` is pressed
+                            // see: https://github.com/crossterm-rs/crossterm/issues/504
+                            KeyCode::Char('h') | KeyCode::Char('w')
+                                if key.modifiers.contains(KeyModifiers::CONTROL) =>
+                            {
+                                self.remove_last_word();
+                            }
                             KeyCode::Char(c) => {
                                 self.input.push(c);
 
@@ -146,6 +165,12 @@ impl Runner {
                                 } else {
                                     self.raw_valid_characters_count += 1;
                                 }
+                            }
+                            KeyCode::Backspace
+                                if key.modifiers.contains(KeyModifiers::ALT)
+                                    | key.modifiers.contains(KeyModifiers::CONTROL) =>
+                            {
+                                self.remove_last_word();
                             }
                             KeyCode::Backspace => {
                                 self.input.pop();
