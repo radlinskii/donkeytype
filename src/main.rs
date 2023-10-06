@@ -163,3 +163,125 @@ fn restore_terminal(
 
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use std::{io::Write, time::Instant};
+
+    use anyhow::{Context, Result};
+    use predicates::Predicate;
+    use tui::{backend::TestBackend, buffer::Buffer, Frame, Terminal};
+
+    use crate::{
+        args::Args,
+        config::Config,
+        expected_input::ExpectedInput,
+        runner::{FrameWrapper, Runner},
+    };
+
+    fn configure_terminal() -> Result<Terminal<TestBackend>, anyhow::Error> {
+        let backend = TestBackend::new(400, 400);
+        let terminal = Terminal::new(backend).context("Unable to create terminal")?;
+
+        Ok(terminal)
+    }
+
+    fn extract_text_from_buffer(buffer: &Buffer) -> String {
+        let mut text = String::new();
+
+        for y in 0..buffer.area.height {
+            for x in 0..buffer.area.height {
+                let cell = buffer.get(x, y);
+                text.push_str(&cell.symbol);
+            }
+            text.push('\n');
+        }
+
+        text
+    }
+
+    fn setup_terminal(args: Args) -> Result<(Config, ExpectedInput, Terminal<TestBackend>)> {
+        let config_file_path = dirs::home_dir()
+            .context("Unable to get home directory")?
+            .join(".config")
+            .join("donkeytype")
+            .join("donkeytype-config.json");
+
+        let config = Config::new(args, config_file_path).context("Unable to create config")?;
+        let expected_input =
+            ExpectedInput::new(&config).context("Unable to create expected input")?;
+        let terminal = configure_terminal().context("Unable to configure terminal")?;
+
+        Ok((config, expected_input, terminal))
+    }
+
+    #[test]
+    fn should_print_default_expected_input() -> Result<()> {
+        let mut temp_dict_file =
+            tempfile::NamedTempFile::new().expect("Unable to create temp file");
+        temp_dict_file
+            .write_all(r#"hello world"#.as_bytes())
+            .expect("Unable to write to temp file");
+
+        let args = Args {
+            dictionary_path: Some(temp_dict_file.path().display().to_string()),
+            duration: None,
+            numbers: None,
+            uppercase: None,
+            uppercase_ratio: None,
+            numbers_ratio: None,
+        };
+
+        let (config, expected_input, mut terminal) = setup_terminal(args)?;
+
+        let mut app = Runner::new(config, expected_input);
+        let start_time = Instant::now();
+
+        terminal
+            .draw(|f: &mut Frame<TestBackend>| {
+                let mut frame_wrapper = FrameWrapper::new(f);
+                app.render(&mut frame_wrapper, start_time.elapsed().as_secs());
+            })
+            .context("Unable to draw in terminal")?;
+
+        let text = extract_text_from_buffer(terminal.backend().buffer());
+
+        let predicate = predicates::str::contains("hello world");
+
+        assert_eq!(true, predicate.eval(&text));
+
+        Ok(())
+    }
+
+    #[test]
+    fn should_print_help_message_for_normal_mode() -> Result<()> {
+        let args = Args {
+            dictionary_path: None,
+            duration: None,
+            uppercase: None,
+            uppercase_ratio: None,
+            numbers: None,
+            numbers_ratio: None,
+        };
+
+        let (config, expected_input, mut terminal) = setup_terminal(args)?;
+
+        let mut app = Runner::new(config, expected_input);
+        let start_time = Instant::now();
+
+        terminal
+            .draw(|f: &mut Frame<TestBackend>| {
+                let mut frame_wrapper = FrameWrapper::new(f);
+                app.render(&mut frame_wrapper, start_time.elapsed().as_secs());
+            })
+            .context("Unable to draw in terminal")?;
+
+        let text = extract_text_from_buffer(terminal.backend().buffer());
+
+        let predicate = predicates::str::contains("press 'e' to start the test, press 'q' to quit");
+
+        assert_eq!(true, predicate.eval(&text));
+
+        Ok(())
+    }
+}

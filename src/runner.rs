@@ -196,7 +196,7 @@ impl Runner {
     /// There are two areas being rendered,
     /// input area - where user input and expected input is displayed,
     /// and info arae - where help message and time remaining is rendered.
-    fn render(&mut self, frame: &mut impl FrameWrapperInterface, time_elapsed: u64) {
+    pub fn render(&mut self, frame: &mut impl FrameWrapperInterface, time_elapsed: u64) {
         let areas = Layout::default()
             .direction(Direction::Vertical)
             .constraints([Constraint::Min(1), Constraint::Length(1)].as_ref())
@@ -424,7 +424,7 @@ impl Runner {
 
 /// Used for generating mocks using `mockall` crate
 #[automock]
-trait FrameWrapperInterface {
+pub trait FrameWrapperInterface {
     fn render_widget<W: Widget + 'static>(&mut self, widget: W, area: Rect);
     fn set_cursor(&mut self, x: u16, y: u16);
     fn size(&self) -> Rect;
