@@ -227,6 +227,8 @@ mod tests {
             dictionary_path: Some(temp_dict_file.path().display().to_string()),
             duration: None,
             numbers: None,
+            uppercase: None,
+            uppercase_ratio: None,
             numbers_ratio: None,
         };
 
@@ -256,6 +258,8 @@ mod tests {
         let args = Args {
             dictionary_path: None,
             duration: None,
+            uppercase: None,
+            uppercase_ratio: None,
             numbers: None,
             numbers_ratio: None,
         };
