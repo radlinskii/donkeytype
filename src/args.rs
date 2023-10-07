@@ -14,7 +14,7 @@ pub struct Args {
     /// indicates if test should include numbers
     #[arg(short, long)]
     pub numbers: Option<bool>,
-    
+
     /// numbers-ratio argument
     #[arg(long)]
     pub numbers_ratio: Option<f64>,
@@ -30,5 +30,5 @@ pub struct Args {
     /// uppercase-ratio argument
     #[arg(long)]
     pub uppercase_ratio: Option<f64>,
-    
+
 }

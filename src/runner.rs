@@ -15,7 +15,8 @@ use anyhow::{Context, Result};
 use crossterm::event::{self, Event, KeyCode, KeyModifiers};
 use mockall::automock;
 use std::time::{Duration, Instant};
-use tui::{
+
+use ratatui::{
     backend::Backend,
     layout::{Alignment, Constraint, Direction, Layout, Rect},
     style::{Color, Style},
@@ -307,8 +308,8 @@ impl Runner {
         {
             let input = Paragraph::new(expected_input_char.to_string()).style(
                 match input_char == expected_input_char {
-                    true => Style::default().fg(Color::Green),
-                    false => Style::default().bg(Color::Red).fg(Color::Gray),
+                    true => Style::default().bg(self.config.color_config.correct_match_bg).fg(self.config.color_config.correct_match_fg),
+                    false => Style::default().bg(self.config.color_config.incorrect_match_bg).fg(self.config.color_config.incorrect_match_fg),
                 },
             );
             frame.render_widget(
