@@ -30,5 +30,5 @@ pub struct Args {
     /// uppercase-ratio argument
     #[arg(long)]
     pub uppercase_ratio: Option<f64>,
-    
+
 }

@@ -8,7 +8,7 @@
 //! | `numbers`         | `false`                | boolean      | flag indicating if numbers should be inserted in expected input      |
 //! | `numbers_ratio`   | `0.05` if numbers=TRUE | number       | ratio for putting numbers in the test                                |
 //! | `dictionary_path` | `"src/dict/words.txt"` | string       | dictionary words to sample from while creating test's expected input |
-//! 
+//!
 //! `NOTE: If provided numbers_ratio is not between 0 to 1.0, Default numbers_ratio = 0.05 will be used.`
 //!
 //!
@@ -36,6 +36,8 @@ use mockall::*;
 use serde::{Deserialize, Serialize};
 use std::{fs, io::Read, path::PathBuf, time::Duration};
 
+use crate::color_scheme::ColorScheme;
+
 use crate::Args;
 
 /// Main program configuration
@@ -47,6 +49,7 @@ pub struct Config {
     pub dictionary_path: PathBuf,
     pub uppercase: bool,
     pub uppercase_ratio: f64,
+    pub color_config: ColorScheme,
 }
 
 /// Used by `serde` crate to parse config file into a rust struct
@@ -57,7 +60,16 @@ struct ConfigFile {
     pub numbers_ratio: Option<f64>,
     pub dictionary_path: Option<String>,
     pub uppercase: Option<bool>,
-    pub uppercase_ratio: Option<f64>
+    pub uppercase_ratio: Option<f64>,
+    pub color_config: Option<ConfigFileColorScheme>,
+}
+
+#[derive(Deserialize, Serialize, Debug)]
+struct ConfigFileColorScheme {
+    pub correct_match_fg: Option<String>,
+    pub correct_match_bg: Option<String>,
+    pub incorrect_match_fg: Option<String>,
+    pub incorrect_match_bg: Option<String>,
 }
 
 #[automock]
@@ -70,7 +82,8 @@ impl Config {
             numbers_ratio: 0.05,
             dictionary_path: PathBuf::from("src/dict/words.txt"),
             uppercase: false,
-            uppercase_ratio: 0.45
+            uppercase_ratio: 0.45,
+            color_config: ColorScheme::default(),
         }
     }
 
@@ -136,6 +149,24 @@ fn augment_config_with_config_file(config: &mut Config, mut config_file: fs::Fil
                 config.uppercase_ratio = uppercase_ratio
             }
         }
+
+        if let Some(color_config) = config_from_file.color_config {
+            if let Some(correct_match_fg) = color_config.correct_match_fg {
+              config.color_config.correct_match_fg = correct_match_fg.parse().unwrap();
+            }
+
+            if let Some(correct_match_bg) = color_config.correct_match_bg {
+              config.color_config.correct_match_bg = correct_match_bg.parse().unwrap();
+            }
+
+            if let Some(incorrect_match_fg) = color_config.incorrect_match_fg {
+              config.color_config.incorrect_match_fg = incorrect_match_fg.parse().unwrap();
+            }
+
+            if let Some(incorrect_match_bg) = color_config.incorrect_match_bg {
+              config.color_config.incorrect_match_bg = incorrect_match_bg.parse().unwrap();
+            }
+        }
     }
 
     Ok(())
@@ -159,7 +190,7 @@ fn augment_config_with_args(config: &mut Config, args: Args) {
         if numbers_ratio >= 0.0 && numbers_ratio <= 1.0 {
             config.numbers_ratio = numbers_ratio
         }
-    }   
+    }
     if let Some(duration) = args.duration {
         config.duration = Duration::from_secs(duration);
     }

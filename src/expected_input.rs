@@ -98,7 +98,7 @@ fn create_uppercase_words (string_vec: &mut Vec<String>, pos: usize, uppercase_r
             v[0] = v[0].to_uppercase().nth(0).unwrap();
             let s: String = v.into_iter().collect();
             string_vec[i] = s;
-        }    
+        }
     }
 }
 
@@ -125,6 +125,7 @@ impl ExpectedInputInterface for ExpectedInput {
 #[cfg(test)]
 mod tests {
     use std::{io::Write, time::Duration};
+    use crate::color_scheme::ColorScheme;
 
     use super::*;
 
@@ -148,7 +149,8 @@ mod tests {
             numbers_ratio: 0.05,
             dictionary_path: config_file.path().to_path_buf(),
             uppercase: false,
-            uppercase_ratio: 0.45
+            uppercase_ratio: 0.45,
+            color_config: ColorScheme::default(),
         };
 
         let expected_input = ExpectedInput::new(&config).expect("unable to create expected input");
