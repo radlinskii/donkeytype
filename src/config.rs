@@ -60,7 +60,7 @@ struct ConfigFile {
     pub numbers_ratio: Option<f64>,
     pub dictionary_path: Option<String>,
     pub uppercase: Option<bool>,
-    pub uppercase_ratio: Option<f64>
+    pub uppercase_ratio: Option<f64>,
     pub color_config: Option<ConfigFileColorScheme>,
 }
 
@@ -82,7 +82,7 @@ impl Config {
             numbers_ratio: 0.05,
             dictionary_path: PathBuf::from("src/dict/words.txt"),
             uppercase: false,
-            uppercase_ratio: 0.45
+            uppercase_ratio: 0.45,
             color_config: ColorScheme::default(),
         }
     }
