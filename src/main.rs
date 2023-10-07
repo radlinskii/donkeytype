@@ -171,7 +171,7 @@ mod tests {
 
     use anyhow::{Context, Result};
     use predicates::Predicate;
-    use tui::{backend::TestBackend, buffer::Buffer, Frame, Terminal};
+    use ratatui::{backend::TestBackend, buffer::Buffer, Frame, Terminal};
 
     use crate::{
         args::Args,
