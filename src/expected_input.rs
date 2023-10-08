@@ -13,6 +13,7 @@ use rand::{seq::SliceRandom, thread_rng, Rng};
 use std::io::Read;
 
 use crate::config::Config;
+use crate::helpers::split_by_char_index;
 
 /// Struct used by runner to hold generate the text used for validation and as a placeholder
 #[derive(Debug)]
@@ -91,7 +92,6 @@ fn replace_words_with_numbers(
 }
 
 fn create_uppercase_words(string_vec: &mut Vec<String>, pos: usize, uppercase_ratio: f64) {
-    // let mut string_vec2 = string_vec.clone();
     let num_uppercase_words = (uppercase_ratio * string_vec[pos..].len() as f64).round() as usize;
     for i in pos..pos + num_uppercase_words {
         if string_vec[i] != "" {
@@ -116,8 +116,8 @@ impl ExpectedInputInterface for ExpectedInput {
     /// enough.
     fn get_string(&self, len: usize) -> String {
         let s = self.str.clone() + " ";
-        let s = s.repeat(len / s.len() + 1);
-        let (s, _) = s.split_at(len);
+        let s = s.repeat((len / s.chars().count()) as usize + 1);
+        let (s, _) = split_by_char_index(&s, len);
 
         s.to_string()
     }
@@ -135,7 +135,7 @@ mod tests {
         let config = Config::default();
         let expected_input = ExpectedInput::new(&config).expect("unable to create expected input");
 
-        assert_eq!(expected_input.get_string(12).len(), 12);
+        assert_eq!(expected_input.get_string(12).chars().count(), 12);
     }
 
     #[test]
@@ -206,5 +206,13 @@ mod tests {
             4,
             "At least 4 items contain only digits"
         );
+    }
+    #[test]
+    fn should_work_with_non_ascii_chars() {
+        let expected_input = ExpectedInput {
+            str: "Բարեւ Ձեզ".to_string(),
+        };
+
+        assert_eq!(expected_input.get_string(5), "Բարեւ");
     }
 }
