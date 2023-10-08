@@ -150,7 +150,7 @@ mod tests {
             dictionary_path: config_file.path().to_path_buf(),
             uppercase: false,
             uppercase_ratio: 0.45,
-            color_config: ColorScheme::default(),
+            colors: ColorScheme::default(),
         };
 
         let expected_input = ExpectedInput::new(&config).expect("unable to create expected input");

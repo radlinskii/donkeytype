@@ -2,14 +2,16 @@
 //!
 //! Default options of configuration are:
 //!
-//! | name              | default value          | type in JSON | description                                                          |
-//! | ----------------- | ---------------------- | ------------ | -------------------------------------------------------------------- |
-//! | `duration`        | `30`                   | number       | duration of the test in seconds                                      |
-//! | `numbers`         | `false`                | boolean      | flag indicating if numbers should be inserted in expected input      |
-//! | `numbers_ratio`   | `0.05` if numbers=TRUE | number       | ratio for putting numbers in the test                                |
-//! | `dictionary_path` | `"src/dict/words.txt"` | string       | dictionary words to sample from while creating test's expected input |
+//! | name              | default value          | type in JSON | description                                                               |
+//! | ----------------- | ---------------------- | ------------ | ------------------------------------------------------------------------- |
+//! | `duration`        | `30`                   | number       | duration of the test in seconds                                           |
+//! | `numbers`         | `false`                | boolean      | flag indicating if numbers should be inserted in expected input           |
+//! | `numbers_ratio`   | `0.05` if numbers=TRUE | number       | ratio for putting numbers in the test                                     |
+//! | `uppercase`       | `false`                | boolean      | flag indicating if uppercase letters should be inserted in expected input |
+//! | `uppercase_ratio` | `0.25`                 | boolean      | ratio for putting uppercase letters in test                               |
+//! | `dictionary_path` | `"src/dict/words.txt"` | string       | dictionary words to sample from while creating test's expected input      |
 //!
-//! `NOTE: If provided numbers_ratio is not between 0 to 1.0, Default numbers_ratio = 0.05 will be used.`
+//! NOTE: If provided `numbers_ratio` is not between `0` to `1.0`, Default `numbers_ratio = 0.05` will be used.
 //!
 //!
 //! Configuration will grow when more features are added (_different modes_, _different languages_, _configuring colors_).
@@ -17,7 +19,8 @@
 //! You can provide this config as options when running the program like so:
 //!
 //! ```shell
-//! cargo run -- --duration 60 --dictionary-path "/usr/share/dict/words" --numbers true --numbers-ratio 0.1
+//! cargo run -- --duration 60 --dictionary-path "/usr/share/dict/words" --numbers true
+//! --numbers-ratio 0.1 --uppercase true --uppercase-ratio 0.3
 //! ```
 //!
 //! or put them in a config file in `~/.config/donkeytype/donkeytype-config.json`:
@@ -27,8 +30,19 @@
 //!     "duration": 60,
 //!     "dictionary_path": "/usr/share/dict/words",
 //!     "numbers": true,
-//!     "numbers_ratio": 0.1
+//!     "numbers_ratio": 0.1,
+//!     "uppercase": true,
+//!     "uppercase_ratio": 0.3
+//!     "colors": {
+//!         "correct_match_fg": "green",
+//!         "correct_match_bg": "white",
+//!         "incorrect_match_fg": "#ff00ff"
+//!         "incorrect_match_bg": "#0f000f"
+//!     }
 //! }
+//!
+//! Providing config in a file also supports passing custom color values.
+//!
 //! ```
 
 use anyhow::{Context, Result};
@@ -37,7 +51,6 @@ use serde::{Deserialize, Serialize};
 use std::{fs, io::Read, path::PathBuf, time::Duration};
 
 use crate::color_scheme::ColorScheme;
-
 use crate::Args;
 
 /// Main program configuration
@@ -49,7 +62,7 @@ pub struct Config {
     pub dictionary_path: PathBuf,
     pub uppercase: bool,
     pub uppercase_ratio: f64,
-    pub color_config: ColorScheme,
+    pub colors: ColorScheme,
 }
 
 /// Used by `serde` crate to parse config file into a rust struct
@@ -61,9 +74,10 @@ struct ConfigFile {
     pub dictionary_path: Option<String>,
     pub uppercase: Option<bool>,
     pub uppercase_ratio: Option<f64>,
-    pub color_config: Option<ConfigFileColorScheme>,
+    pub colors: Option<ConfigFileColorScheme>,
 }
 
+/// Struct used be `serde` crate to parse colors config from config file
 #[derive(Deserialize, Serialize, Debug)]
 struct ConfigFileColorScheme {
     pub correct_match_fg: Option<String>,
@@ -82,8 +96,8 @@ impl Config {
             numbers_ratio: 0.05,
             dictionary_path: PathBuf::from("src/dict/words.txt"),
             uppercase: false,
-            uppercase_ratio: 0.45,
-            color_config: ColorScheme::default(),
+            uppercase_ratio: 0.25,
+            colors: ColorScheme::default(),
         }
     }
 
@@ -150,21 +164,21 @@ fn augment_config_with_config_file(config: &mut Config, mut config_file: fs::Fil
             }
         }
 
-        if let Some(color_config) = config_from_file.color_config {
-            if let Some(correct_match_fg) = color_config.correct_match_fg {
-              config.color_config.correct_match_fg = correct_match_fg.parse().unwrap();
+        if let Some(colors) = config_from_file.colors {
+            if let Some(correct_match_fg) = colors.correct_match_fg {
+                config.colors.correct_match_fg = correct_match_fg.parse().unwrap();
             }
 
-            if let Some(correct_match_bg) = color_config.correct_match_bg {
-              config.color_config.correct_match_bg = correct_match_bg.parse().unwrap();
+            if let Some(correct_match_bg) = colors.correct_match_bg {
+                config.colors.correct_match_bg = correct_match_bg.parse().unwrap();
             }
 
-            if let Some(incorrect_match_fg) = color_config.incorrect_match_fg {
-              config.color_config.incorrect_match_fg = incorrect_match_fg.parse().unwrap();
+            if let Some(incorrect_match_fg) = colors.incorrect_match_fg {
+                config.colors.incorrect_match_fg = incorrect_match_fg.parse().unwrap();
             }
 
-            if let Some(incorrect_match_bg) = color_config.incorrect_match_bg {
-              config.color_config.incorrect_match_bg = incorrect_match_bg.parse().unwrap();
+            if let Some(incorrect_match_bg) = colors.incorrect_match_bg {
+                config.colors.incorrect_match_bg = incorrect_match_bg.parse().unwrap();
             }
         }
     }
@@ -232,7 +246,7 @@ mod tests {
             numbers_ratio: None,
             dictionary_path: None,
             uppercase: None,
-            uppercase_ratio: None
+            uppercase_ratio: None,
         };
         let config = Config::new(args, PathBuf::new()).expect("Unable to create config");
 
@@ -254,7 +268,7 @@ mod tests {
             numbers_ratio: None,
             dictionary_path: None,
             uppercase: None,
-            uppercase_ratio: None
+            uppercase_ratio: None,
         };
         let config =
             Config::new(args, config_file.path().to_path_buf()).expect("Unable to create config");
@@ -272,7 +286,7 @@ mod tests {
             numbers_ratio: None,
             dictionary_path: None,
             uppercase: None,
-            uppercase_ratio: None
+            uppercase_ratio: None,
         };
         let config = Config::new(args, PathBuf::new()).expect("Unable to create config");
 
@@ -294,7 +308,7 @@ mod tests {
             numbers_ratio: None,
             dictionary_path: Some(String::from("/etc/dict/words")),
             uppercase: None,
-            uppercase_ratio: None
+            uppercase_ratio: None,
         };
         let config =
             Config::new(args, config_file.path().to_path_buf()).expect("Unable to create config");

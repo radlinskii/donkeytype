@@ -6,10 +6,13 @@ a _very_ minimalistic _cli_ typing test.
 
 ## How it works
 
-When run the program you will see the expected input displayed at the top of your terminal window.
+When the program is run you will see the expected input displayed at the top of your terminal window.
 This text is a placeholder, and this is the input that you should write when the test is started.
+Now you should write this text as fast as you can.
+If you make a mistake you can press `backspace` to delete a single character,
+or press `backspace` while holding `Option`/`Ctrl` to delete a whole word.
 
-On the bottom-right corner there is a help message saying that to start the test you need to press `'e'` (enter the test) or leave by pressing `'q'`
+On the bottom-right corner is a help message saying that to start the test you need to press `'e'` (enter the test) or leave by pressing `'q'`
 When test is running you can see how much time you have left in bottom-left corner.
 
 You can pause the test by pressing <Esc>, to resume it press `'e'` again.
@@ -38,29 +41,22 @@ Configuration will grow when more features are added (_different modes_, _differ
 
 Default config looks like this:
 
-| name              | default value          | type in JSON | description                                                          |
-| ----------------- | ---------------------- | ------------ | -------------------------------------------------------------------- |
-| `duration`        | `30`                   | number       | duration of the test in seconds                                      |
-| `numbers`         | `false`                | boolean      | flag indicating if numbers should be inserted in expected input      |
-| `numbers_ratio`   | `0.05` if numbers=TRUE | number       | ratio for putting numbers in the test                                |
-| `dictionary_path` | `"src/dict/words.txt"` | string       | dictionary words to sample from while creating test's expected input |
+| name              | default value          | type in JSON | description                                                               |
+| ----------------- | ---------------------- | ------------ | ------------------------------------------------------------------------- |
+| `duration`        | `30`                   | number       | duration of the test in seconds                                           |
+| `numbers`         | `false`                | boolean      | flag indicating if numbers should be inserted in expected input           |
+| `numbers_ratio`   | `0.05` if numbers=TRUE | number       | ratio for putting numbers in the test                                     |
+| `uppercase`       | `false`                | boolean      | flag indicating if uppercase letters should be inserted in expected input |
+| `uppercase_ratio` | `0.25`                 | boolean      | ratio for putting uppercase letters in test                               |
+| `dictionary_path` | `"src/dict/words.txt"` | string       | dictionary words to sample from while creating test's expected input      |
 
-`NOTE: If provided numbers_ratio is not between 0 to 1.0, Default numbers_ratio = 0.05 will be used.`
+> NOTE: If provided `numbers_ratio` is not between `0` to `1.0`, Default `numbers_ratio = 0.05` will be used.
+> Same happens with `uppercase_ratio`.
 
 You can provide this config as options when running the program like so:
 
 ```shell
-cargo run -- --duration 60 --dictionary-path "/usr/share/dict/words" --numbers true
-```
-
-or put them in a config file in `~/.config/donkeytype/donkeytype-config.json`:
-
-```json
-{
-    "duration": 60,
-    "dictionary_path": "/usr/share/dict/words",
-    "numbers": false
-}
+cargo run -- --duration 60 --numbers true --uppercase true
 ```
 
 To get all the available options run
@@ -68,6 +64,27 @@ To get all the available options run
 ```shell
 cargo run -- --help
 ```
+
+You can also put all the options inside config file in `~/.config/donkeytype/donkeytype-config.json`:
+
+```json
+{
+    "duration": 60,
+    "dictionary_path": "/usr/share/dict/words",
+    "numbers": true,
+    "numbers_ratio": 0.1,
+    "uppercase": true,
+    "uppercase_ratio": 0.3
+    "colors": {
+        "correct_match_fg": "green",
+        "correct_match_bg": "white",
+        "incorrect_match_fg": "#ff00ff"
+        "incorrect_match_bg": "#0f000f"
+    }
+}
+```
+
+> Providing config in a file also supports passing custom color values.
 
 ## Development
 
