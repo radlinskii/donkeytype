@@ -1,4 +1,4 @@
-//! Test runner module. Controles the test flow, checks input, and returns results.
+//! Test runner module. Controls the test flow, checks input, and returns results.
 //!
 //! This is the main module that is orchestrating the flow of the test.
 //! It prints the expected input as placeholder, then it reads user input and reacts to it.
@@ -35,7 +35,7 @@ enum InputMode {
     Editing,
 }
 
-/// Struct that runs and controlles the test.
+/// Struct that runs and controls the test.
 pub struct Runner {
     input: String,
     input_mode: InputMode,
@@ -196,7 +196,7 @@ impl Runner {
     ///
     /// There are two areas being rendered,
     /// input area - where user input and expected input is displayed,
-    /// and info arae - where help message and time remaining is rendered.
+    /// and info area - where help message and time remaining is rendered.
     pub fn render(&mut self, frame: &mut impl FrameWrapperInterface, time_elapsed: u64) {
         let areas = Layout::default()
             .direction(Direction::Vertical)
@@ -308,8 +308,12 @@ impl Runner {
         {
             let input = Paragraph::new(expected_input_char.to_string()).style(
                 match input_char == expected_input_char {
-                    true => Style::default().bg(self.config.color_config.correct_match_bg).fg(self.config.color_config.correct_match_fg),
-                    false => Style::default().bg(self.config.color_config.incorrect_match_bg).fg(self.config.color_config.incorrect_match_fg),
+                    true => Style::default()
+                        .bg(self.config.color_config.correct_match_bg)
+                        .fg(self.config.color_config.correct_match_fg),
+                    false => Style::default()
+                        .bg(self.config.color_config.incorrect_match_bg)
+                        .fg(self.config.color_config.incorrect_match_fg),
                 },
             );
             frame.render_widget(
@@ -379,7 +383,7 @@ impl Runner {
     ///
     /// `raw_valid_characters_count` is number of times when valid character was pressed.
     /// `raw_mistakes_count is number` of times when invalid character was pressed.
-    /// `raw_typed_characters_count` is number of key presses that happened in `Edting` mode during
+    /// `raw_typed_characters_count` is number of key presses that happened in `Editing` mode during
     /// the test.
     /// `raw_accuracy` is ratio of `raw_valid_characters_count` to `raw_typed_characters_count`.
     ///

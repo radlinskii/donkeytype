@@ -12,7 +12,7 @@ This text is a placeholder, and this is the input that you should write when the
 On the bottom-right corner there is a help message saying that to start the test you need to press `'e'` (enter the test) or leave by pressing `'q'`
 When test is running you can see how much time you have left in bottom-left corner.
 
-You can pause the test by pressinng <Esc>, to resume it press `'e'` again.
+You can pause the test by pressing <Esc>, to resume it press `'e'` again.
 
 WPM (words per minute) score is calculated as amount of typed characters divided by 5 (word), divided by the duration normalized to 60 seconds (minute).
 
@@ -44,10 +44,8 @@ Default config looks like this:
 | `numbers`         | `false`                | boolean      | flag indicating if numbers should be inserted in expected input      |
 | `numbers_ratio`   | `0.05` if numbers=TRUE | number       | ratio for putting numbers in the test                                |
 | `dictionary_path` | `"src/dict/words.txt"` | string       | dictionary words to sample from while creating test's expected input |
- 
+
 `NOTE: If provided numbers_ratio is not between 0 to 1.0, Default numbers_ratio = 0.05 will be used.`
-
-
 
 You can provide this config as options when running the program like so:
 
@@ -94,7 +92,7 @@ To submit a contribution, follow these general steps:
 
 1. Create your own fork of the code repository.
 2. Make the desired changes in your fork.
-3. Ennsure your changes adhere to the code style and quality standards.
+3. Ensure your changes adhere to the code style and quality standards.
 
 ### Hacktoberfest 2023
 
