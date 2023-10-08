@@ -40,10 +40,11 @@ impl ExpectedInput {
 
         // creating a pointer which points to where the words starts in the vector to help with uppercase words since we replace
         // words in the beginning with numbers when numbers are enabled.
-        let mut words_start_pos:usize = 0;
+        let mut words_start_pos: usize = 0;
 
         if config.numbers == true {
-            words_start_pos = replace_words_with_numbers(&mut string_vec, &mut rng, config.numbers_ratio);
+            words_start_pos =
+                replace_words_with_numbers(&mut string_vec, &mut rng, config.numbers_ratio);
             str_vec = string_vec.iter().map(|s| s.as_str()).collect();
         }
 
@@ -70,13 +71,13 @@ fn replace_words_with_numbers(
     rng: &mut rand::rngs::ThreadRng,
     numbers_ratio: f64,
 ) -> usize {
-    let change_to_num_treshold = (numbers_ratio * string_vec.len() as f64).round() as usize;
+    let change_to_num_threshold = (numbers_ratio * string_vec.len() as f64).round() as usize;
 
     *string_vec = string_vec
         .iter()
         .enumerate()
         .map(|(index, word)| {
-            if index < change_to_num_treshold {
+            if index < change_to_num_threshold {
                 let random_digits: String = (0..word.len())
                     .map(|_| rng.gen_range(b'0'..=b'9') as char)
                     .collect();
@@ -86,14 +87,14 @@ fn replace_words_with_numbers(
         })
         .collect();
 
-    return change_to_num_treshold - 1
+    return change_to_num_threshold - 1;
 }
 
-fn create_uppercase_words (string_vec: &mut Vec<String>, pos: usize, uppercase_ratio: f64) {
+fn create_uppercase_words(string_vec: &mut Vec<String>, pos: usize, uppercase_ratio: f64) {
     // let mut string_vec2 = string_vec.clone();
     let num_uppercase_words = (uppercase_ratio * string_vec[pos..].len() as f64).round() as usize;
-    for i in pos..pos+num_uppercase_words{
-        if string_vec[i] != ""{
+    for i in pos..pos + num_uppercase_words {
+        if string_vec[i] != "" {
             let mut v: Vec<char> = string_vec[i].chars().collect();
             v[0] = v[0].to_uppercase().nth(0).unwrap();
             let s: String = v.into_iter().collect();
@@ -124,8 +125,8 @@ impl ExpectedInputInterface for ExpectedInput {
 
 #[cfg(test)]
 mod tests {
-    use std::{io::Write, time::Duration};
     use crate::color_scheme::ColorScheme;
+    use std::{io::Write, time::Duration};
 
     use super::*;
 
@@ -198,8 +199,8 @@ mod tests {
             .filter(|item| item.chars().all(|c| c.is_digit(10)))
             .collect();
 
-        let change_to_num_treshold = (numbers_ratio * string_vec.len() as f64).round() as usize;
-        assert_eq!(change_to_num_treshold, 4);
+        let change_to_num_threshold = (numbers_ratio * string_vec.len() as f64).round() as usize;
+        assert_eq!(change_to_num_threshold, 4);
         assert_eq!(
             items_with_only_digits.len(),
             4,
