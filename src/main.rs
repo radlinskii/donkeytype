@@ -54,6 +54,7 @@ mod config;
 mod expected_input;
 mod helpers;
 mod runner;
+mod stats;
 
 use anyhow::{Context, Result};
 use clap::Parser;
@@ -89,7 +90,6 @@ fn main() -> anyhow::Result<()> {
 
     let args = Args::parse();
     let config = Config::new(args, config_file_path).context("Unable to create config")?;
-    let duration = config.duration.as_secs();
     let expected_input = ExpectedInput::new(&config).context("Unable to create expected input")?;
     let mut terminal = configure_terminal().context("Unable to configure terminal")?;
 
@@ -100,22 +100,7 @@ fn main() -> anyhow::Result<()> {
 
     match res {
         Ok(stats) => {
-            println!("WPM: {:.2}", stats.wpm);
-            println!("Raw accuracy: {:.2}%", stats.raw_accuracy);
-            println!("Raw valid characters: {}", stats.raw_valid_characters_count);
-            println!("Raw mistakes: {}", stats.raw_mistakes_count);
-            println!("Raw characters typed: {}", stats.raw_typed_characters_count);
-            println!("Accuracy after corrections: {:.2}%", stats.accuracy);
-            println!(
-                "Valid characters after corrections: {}",
-                stats.valid_characters_count
-            );
-            println!("Mistakes after corrections: {}", stats.mistakes_count);
-            println!(
-                "Characters typed after corrections: {}",
-                stats.typed_characters_count
-            );
-            println!("Time: {} seconds", duration);
+            stats.print();
 
             Ok(())
         }

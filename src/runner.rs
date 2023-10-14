@@ -28,6 +28,7 @@ use ratatui::{
 use crate::config::Config;
 use crate::expected_input::ExpectedInputInterface;
 use crate::helpers::split_by_char_index;
+use crate::stats::Stats;
 
 /// To switch from Normal to Editing press `e`.
 /// To switch from Editing to Normal press `<Esc>`.
@@ -44,20 +45,6 @@ pub struct Runner {
     expected_input: Box<dyn ExpectedInputInterface>,
     raw_mistakes_count: u64,
     raw_valid_characters_count: u64,
-}
-
-/// Struct holding the test results.
-#[derive(Debug)]
-pub struct Stats {
-    pub wpm: f64,
-    pub raw_accuracy: f64,
-    pub raw_valid_characters_count: u64,
-    pub raw_mistakes_count: u64,
-    pub raw_typed_characters_count: u64,
-    pub accuracy: f64,
-    pub valid_characters_count: u64,
-    pub typed_characters_count: u64,
-    pub mistakes_count: u64,
 }
 
 impl Runner {
