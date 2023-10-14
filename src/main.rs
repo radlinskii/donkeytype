@@ -49,9 +49,10 @@
 //! ```
 
 mod args;
-mod config;
 mod color_scheme;
+mod config;
 mod expected_input;
+mod helpers;
 mod runner;
 
 use anyhow::{Context, Result};
@@ -63,8 +64,8 @@ use crossterm::{
         self, disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen,
     },
 };
-use std::io;
 use ratatui::{backend::CrosstermBackend, Terminal};
+use std::io;
 
 use args::Args;
 use config::Config;

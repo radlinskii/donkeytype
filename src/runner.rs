@@ -27,6 +27,7 @@ use ratatui::{
 
 use crate::config::Config;
 use crate::expected_input::ExpectedInputInterface;
+use crate::helpers::split_by_char_index;
 
 /// To switch from Normal to Editing press `e`.
 /// To switch from Editing to Normal press `<Esc>`.
@@ -205,23 +206,28 @@ impl Runner {
         let input_area = areas[0];
         let info_area = areas[1];
 
-        let frame_width = frame.size().width as usize;
-        let input_len = self.input.len();
-        let current_line_index = (input_len / frame_width) as u16;
-        let input_current_line_len = input_len % frame_width;
+        let frame_width: usize = frame.size().width as usize;
+        let input_chars_count: usize = self.input.chars().count();
+        let current_line_index = (input_chars_count / frame_width) as u16;
+        let input_current_line_len = input_chars_count % frame_width;
 
         let expected_input_str = self
             .expected_input
             .get_string((current_line_index as usize + 2) * frame_width);
-        let (expected_input_current_line, expected_input_following_lines) =
-            expected_input_str.split_at(((current_line_index as usize) + 1) * frame_width);
+
+        let (expected_input_current_line, expected_input_following_lines) = split_by_char_index(
+            &expected_input_str,
+            ((current_line_index as usize) + 1) * frame_width,
+        );
+
         let (expected_input_current_line_already_typed, expected_input_current_line_rest) =
-            expected_input_current_line.split_at(input_len);
+            split_by_char_index(&expected_input_current_line, input_chars_count);
+
         let expected_input_str = expected_input_current_line_already_typed.to_string()
             + expected_input_current_line_rest
             + expected_input_following_lines;
 
-        self.print_input(frame, expected_input_str, input_area, frame_width);
+        self.print_input(frame, &expected_input_str, input_area, frame_width);
 
         self.print_block_of_text(
             frame,
@@ -299,14 +305,14 @@ impl Runner {
     fn print_input(
         &mut self,
         frame: &mut impl FrameWrapperInterface,
-        expected_input: String,
+        expected_input: &str,
         input_area: Rect,
         frame_width: usize,
     ) {
-        for ((input_char_index, input_char), (_, expected_input_char)) in
-            self.input.char_indices().zip(expected_input.char_indices())
+        for ((input_char_index, input_char), expected_input_char) in
+            self.input.chars().enumerate().zip(expected_input.chars())
         {
-            let input = Paragraph::new(expected_input_char.to_string()).style(
+            let input: Paragraph<'_> = Paragraph::new(input_char.to_string()).style(
                 match input_char == expected_input_char {
                     true => Style::default()
                         .bg(self.config.colors.correct_match_bg)
@@ -561,7 +567,7 @@ mod test {
 
         runner.print_input(
             &mut frame,
-            "foo".to_string(),
+            "foo",
             Rect {
                 x: 0,
                 y: 0,
