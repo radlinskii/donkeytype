@@ -101,6 +101,7 @@ fn main() -> anyhow::Result<()> {
     match res {
         Ok(stats) => {
             stats.print();
+            stats.save_to_file();
 
             Ok(())
         }
