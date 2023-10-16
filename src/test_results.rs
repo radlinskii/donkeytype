@@ -32,6 +32,8 @@ pub struct TestResults {
     // tells if test was successfully completed and results should be displayed and saved.
     #[serde(skip)]
     pub completed: bool,
+    #[serde(skip)]
+    pub save: bool,
 }
 
 /// Struct holding numeric test results.
@@ -91,6 +93,7 @@ impl TestResults {
             uppercase_ratio: Some(config.uppercase_ratio),
 
             completed,
+            save: config.save_results,
         }
     }
 

@@ -1,4 +1,4 @@
-//! a very minimalistic cli typing test.
+//! Donkeytype - a very minimalistic cli typing test.
 //!
 //! It shows an expected input in the terminal window of the user and measures how many characters
 //! user types in the given amount of time.
@@ -13,33 +13,51 @@
 //! cargo run
 //! ```
 //!
-//! ## Configuration
 //!
+//! ## Configuration
 //!
 //! Default options of configuration are:
 //!
-//! | name              | default value          | type in JSON | description                                                          |
-//! | ----------------- | ---------------------- | ------------ | -------------------------------------------------------------------- |
-//! | `duration`        | `30`                   | number       | duration of the test in seconds                                      |
-//! | `numbers`         | `false`                | boolean      | flag indicating if numbers should be inserted in expected input      |
-//! | `dictionary_path` | `"src/dict/words.txt"` | string       | dictionary words to sample from while creating test's expected input |
+//! | name              | default value          | type in JSON | description                                                               |
+//! | ----------------- | ---------------------- | ------------ | ------------------------------------------------------------------------- |
+//! | `duration`        | `30`                   | number       | duration of the test in seconds                                           |
+//! | `numbers`         | `false`                | boolean      | flag indicating if numbers should be inserted in expected input           |
+//! | `numbers_ratio`   | `0.05` if numbers=TRUE | number       | ratio for putting numbers in the test                                     |
+//! | `uppercase`       | `false`                | boolean      | flag indicating if uppercase letters should be inserted in expected input |
+//! | `uppercase_ratio` | `0.15`                 | boolean      | ratio for putting uppercase letters in test                               |
+//! | `dictionary_path` | `"src/dict/words.txt"` | string       | dictionary words to sample from while creating test's expected input      |
+//! | `save_results`    | `true`                 | boolean      | flag indicating if results should be saved to a file                      |
 //!
-//! Configuration will grow when more features are added (_different modes_, _different languages_, _configuring colors_).
+//! NOTE: If provided `numbers_ratio` is not between `0` to `1.0`, Default `numbers_ratio = 0.05` will be used.
+//! NOTE: If provided `uppercase_ratio` is not between `0` to `1.0`, Default `numbers_ratio = 0.15` will be used.
 //!
-//! You can provide this config as options when running the program like so:
+//! Configuration will grow when more features are added (_different modes_, _different languages_).
 //!
-//! ```shell
-//! cargo run -- --duration 60 --dictionary-path "/usr/share/dict/words" --numbers true
-//! ```
-//!
-//! or put them in a config file in `~/.config/donkeytype/donkeytype-config.json`:
+//! You can provide this config by putting it in a config file in `~/.config/donkeytype/donkeytype-config.json`:
 //!
 //! ```json
 //! {
 //!     "duration": 60,
 //!     "dictionary_path": "/usr/share/dict/words",
-//!     "numbers": false
+//!     "numbers": true,
+//!     "numbers_ratio": 0.1,
+//!     "uppercase": true,
+//!     "uppercase_ratio": 0.3
+//!     "colors": {
+//!         "correct_match_fg": "green",
+//!         "correct_match_bg": "white",
+//!         "incorrect_match_fg": "#ff00ff"
+//!         "incorrect_match_bg": "#0f000f"
+//!     }
 //! }
+//!
+//! > Note: Providing config in a file supports passing custom color values.
+//!
+//! Apart from `colors` you can set configuration by passing options when running the program:
+//!
+//! ```shell
+//! cargo run -- --duration 60 --dictionary-path "/usr/share/dict/words" --numbers true
+//! --numbers-ratio 0.1 --uppercase true --uppercase-ratio 0.3 --save-results false
 //! ```
 //!
 //! To get all the available options run
@@ -104,10 +122,12 @@ fn main() -> anyhow::Result<()> {
                 println!("Test completed.");
                 test_results.print_stats();
 
-                if let Err(err) = test_results.save_to_file() {
-                    eprintln!("{:?}", err);
+                if test_results.save {
+                    if let Err(err) = test_results.save_to_file() {
+                        eprintln!("{:?}", err);
 
-                    return Err(err);
+                        return Err(err);
+                    }
                 }
             } else {
                 println!("Test not finished.");
@@ -228,6 +248,7 @@ mod tests {
             uppercase: None,
             uppercase_ratio: None,
             numbers_ratio: None,
+            save_results: None,
         };
 
         let (config, expected_input, mut terminal) = setup_terminal(args)?;
@@ -260,6 +281,7 @@ mod tests {
             uppercase_ratio: None,
             numbers: None,
             numbers_ratio: None,
+            save_results: None,
         };
 
         let (config, expected_input, mut terminal) = setup_terminal(args)?;
