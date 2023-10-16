@@ -119,7 +119,7 @@ fn main() -> anyhow::Result<()> {
     match res {
         Ok(test_results) => {
             if test_results.completed {
-                println!("Test completed.");
+                println!("Test completed.\n");
                 test_results.print_stats();
 
                 if test_results.save {

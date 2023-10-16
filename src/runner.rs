@@ -398,19 +398,29 @@ impl Runner {
             .count() as u64;
         let valid_characters_count = typed_characters_count as u64 - mistakes_count;
 
+        fn get_percentage(numerator: f64, denominator: f64) -> f64 {
+            if denominator == 0.0 {
+                return 0.0;
+            }
+
+            numerator / denominator * 100.0
+        }
+
         Stats {
             wpm: valid_characters_count as f64 / 5.0 * 60.0 / self.config.duration.as_secs() as f64,
 
-            raw_accuracy: (self.raw_valid_characters_count) as f64
-                / (self.raw_valid_characters_count + self.raw_mistakes_count) as f64
-                * 100.0,
+            raw_accuracy: get_percentage(
+                self.raw_valid_characters_count as f64,
+                (self.raw_valid_characters_count + self.raw_mistakes_count) as f64,
+            ),
             raw_valid_characters_count: self.raw_valid_characters_count,
             raw_mistakes_count: self.raw_mistakes_count,
             raw_typed_characters_count: self.raw_valid_characters_count + self.raw_mistakes_count,
 
-            accuracy: (typed_characters_count - mistakes_count as usize) as f64
-                / typed_characters_count as f64
-                * 100.0,
+            accuracy: get_percentage(
+                (typed_characters_count - mistakes_count as usize) as f64,
+                typed_characters_count as f64,
+            ),
             valid_characters_count,
             mistakes_count,
             typed_characters_count: typed_characters_count as u64,
