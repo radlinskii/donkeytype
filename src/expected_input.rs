@@ -152,6 +152,7 @@ mod tests {
             uppercase: false,
             uppercase_ratio: 0.45,
             colors: ColorScheme::default(),
+            save_results: false,
         };
 
         let expected_input = ExpectedInput::new(&config).expect("unable to create expected input");

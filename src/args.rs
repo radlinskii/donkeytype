@@ -30,4 +30,8 @@ pub struct Args {
     /// uppercase-ratio argument
     #[arg(long)]
     pub uppercase_ratio: Option<f64>,
+
+    /// indicates if test results should be saved
+    #[arg(long)]
+    pub save_results: Option<bool>,
 }

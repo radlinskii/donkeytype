@@ -28,6 +28,7 @@ use ratatui::{
 use crate::config::Config;
 use crate::expected_input::ExpectedInputInterface;
 use crate::helpers::split_by_char_index;
+use crate::test_results::{Stats, TestResults};
 
 /// To switch from Normal to Editing press `e`.
 /// To switch from Editing to Normal press `<Esc>`.
@@ -44,20 +45,6 @@ pub struct Runner {
     expected_input: Box<dyn ExpectedInputInterface>,
     raw_mistakes_count: u64,
     raw_valid_characters_count: u64,
-}
-
-/// Struct holding the test results.
-#[derive(Debug)]
-pub struct Stats {
-    pub wpm: f64,
-    pub raw_accuracy: f64,
-    pub raw_valid_characters_count: u64,
-    pub raw_mistakes_count: u64,
-    pub raw_typed_characters_count: u64,
-    pub accuracy: f64,
-    pub valid_characters_count: u64,
-    pub typed_characters_count: u64,
-    pub mistakes_count: u64,
 }
 
 impl Runner {
@@ -88,7 +75,7 @@ impl Runner {
     /// Method that runs the test.
     ///
     /// It renders the application using the `tui` crate and reacts to user input.
-    pub fn run<B: Backend>(&mut self, terminal: &mut Terminal<B>) -> Result<Stats> {
+    pub fn run<B: Backend>(&mut self, terminal: &mut Terminal<B>) -> Result<TestResults> {
         let mut start_time = Instant::now();
         let mut pause_time = Instant::now();
         let mut is_started = false;
@@ -98,7 +85,11 @@ impl Runner {
         loop {
             if let InputMode::Editing = self.input_mode {
                 if is_started && start_time.elapsed() >= self.config.duration {
-                    return Ok(self.get_stats());
+                    return Ok(TestResults::new(
+                        self.get_stats(),
+                        self.config.clone(),
+                        true,
+                    ));
                 }
             }
 
@@ -128,17 +119,11 @@ impl Runner {
                             }
                             KeyCode::Char('q') => {
                                 // todo return canceled test error and handle it in main
-                                return Ok(Stats {
-                                    wpm: 0.0,
-                                    raw_accuracy: 0.0,
-                                    raw_valid_characters_count: 0,
-                                    raw_mistakes_count: 0,
-                                    raw_typed_characters_count: 0,
-                                    accuracy: 0.0,
-                                    valid_characters_count: 0,
-                                    mistakes_count: 0,
-                                    typed_characters_count: 0,
-                                });
+                                return Ok(TestResults::new(
+                                    Stats::default(),
+                                    self.config.clone(),
+                                    false,
+                                ));
                             }
                             _ => {}
                         },
@@ -413,19 +398,29 @@ impl Runner {
             .count() as u64;
         let valid_characters_count = typed_characters_count as u64 - mistakes_count;
 
+        fn get_percentage(numerator: f64, denominator: f64) -> f64 {
+            if denominator == 0.0 {
+                return 0.0;
+            }
+
+            numerator / denominator * 100.0
+        }
+
         Stats {
             wpm: valid_characters_count as f64 / 5.0 * 60.0 / self.config.duration.as_secs() as f64,
 
-            raw_accuracy: (self.raw_valid_characters_count) as f64
-                / (self.raw_valid_characters_count + self.raw_mistakes_count) as f64
-                * 100.0,
+            raw_accuracy: get_percentage(
+                self.raw_valid_characters_count as f64,
+                (self.raw_valid_characters_count + self.raw_mistakes_count) as f64,
+            ),
             raw_valid_characters_count: self.raw_valid_characters_count,
             raw_mistakes_count: self.raw_mistakes_count,
             raw_typed_characters_count: self.raw_valid_characters_count + self.raw_mistakes_count,
 
-            accuracy: (typed_characters_count - mistakes_count as usize) as f64
-                / typed_characters_count as f64
-                * 100.0,
+            accuracy: get_percentage(
+                (typed_characters_count - mistakes_count as usize) as f64,
+                typed_characters_count as f64,
+            ),
             valid_characters_count,
             mistakes_count,
             typed_characters_count: typed_characters_count as u64,

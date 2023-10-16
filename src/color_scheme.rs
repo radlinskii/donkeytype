@@ -6,7 +6,7 @@
 use ratatui::style::Color;
 
 /// Struct used in config for defining colors used in test.
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub struct ColorScheme {
     pub correct_match_fg: Color,
     pub correct_match_bg: Color,

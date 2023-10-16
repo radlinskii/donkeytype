@@ -8,22 +8,16 @@
 //! | `numbers`         | `false`                | boolean      | flag indicating if numbers should be inserted in expected input           |
 //! | `numbers_ratio`   | `0.05` if numbers=TRUE | number       | ratio for putting numbers in the test                                     |
 //! | `uppercase`       | `false`                | boolean      | flag indicating if uppercase letters should be inserted in expected input |
-//! | `uppercase_ratio` | `0.25`                 | boolean      | ratio for putting uppercase letters in test                               |
+//! | `uppercase_ratio` | `0.15`                 | boolean      | ratio for putting uppercase letters in test                               |
 //! | `dictionary_path` | `"src/dict/words.txt"` | string       | dictionary words to sample from while creating test's expected input      |
+//! | `save_results`    | `true`                 | boolean      | flag indicating if results should be saved to a file                      |
 //!
 //! NOTE: If provided `numbers_ratio` is not between `0` to `1.0`, Default `numbers_ratio = 0.05` will be used.
+//! NOTE: If provided `uppercase_ratio` is not between `0` to `1.0`, Default `numbers_ratio = 0.15` will be used.
 //!
+//! Configuration will grow when more features are added (_different modes_, _different languages_).
 //!
-//! Configuration will grow when more features are added (_different modes_, _different languages_, _configuring colors_).
-//!
-//! You can provide this config as options when running the program like so:
-//!
-//! ```shell
-//! cargo run -- --duration 60 --dictionary-path "/usr/share/dict/words" --numbers true
-//! --numbers-ratio 0.1 --uppercase true --uppercase-ratio 0.3
-//! ```
-//!
-//! or put them in a config file in `~/.config/donkeytype/donkeytype-config.json`:
+//! You can provide this config by putting it in a config file in `~/.config/donkeytype/donkeytype-config.json`:
 //!
 //! ```json
 //! {
@@ -41,8 +35,19 @@
 //!     }
 //! }
 //!
-//! Providing config in a file also supports passing custom color values.
+//! > Note: Providing config in a file supports passing custom color values.
 //!
+//! Apart from `colors` you can set configuration by passing options when running the program:
+//!
+//! ```shell
+//! cargo run -- --duration 60 --dictionary-path "/usr/share/dict/words" --numbers true
+//! --numbers-ratio 0.1 --uppercase true --uppercase-ratio 0.3 --save--results false
+//! ```
+//!
+//! To get all the available options run
+//!
+//! ```shell
+//! cargo run -- --help
 //! ```
 
 use anyhow::{Context, Result};
@@ -54,7 +59,7 @@ use crate::color_scheme::ColorScheme;
 use crate::Args;
 
 /// Main program configuration
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Config {
     pub duration: Duration,
     pub numbers: bool,
@@ -63,6 +68,7 @@ pub struct Config {
     pub uppercase: bool,
     pub uppercase_ratio: f64,
     pub colors: ColorScheme,
+    pub save_results: bool,
 }
 
 /// Used by `serde` crate to parse config file into a rust struct
@@ -75,6 +81,7 @@ struct ConfigFile {
     pub uppercase: Option<bool>,
     pub uppercase_ratio: Option<f64>,
     pub colors: Option<ConfigFileColorScheme>,
+    pub save_results: Option<bool>,
 }
 
 /// Struct used be `serde` crate to parse colors config from config file
@@ -96,8 +103,9 @@ impl Config {
             numbers_ratio: 0.05,
             dictionary_path: PathBuf::from("src/dict/words.txt"),
             uppercase: false,
-            uppercase_ratio: 0.25,
+            uppercase_ratio: 0.15,
             colors: ColorScheme::default(),
+            save_results: true,
         }
     }
 
@@ -181,6 +189,10 @@ fn augment_config_with_config_file(config: &mut Config, mut config_file: fs::Fil
                 config.colors.incorrect_match_bg = incorrect_match_bg.parse().unwrap();
             }
         }
+
+        if let Some(save_results) = config_from_file.save_results {
+            config.save_results = save_results;
+        }
     }
 
     Ok(())
@@ -211,15 +223,16 @@ fn augment_config_with_args(config: &mut Config, args: Args) {
     if let Some(dictionary_path) = args.dictionary_path {
         config.dictionary_path = PathBuf::from(dictionary_path);
     }
-
     if let Some(uppercase_flag) = args.uppercase {
         config.uppercase = uppercase_flag
     }
-
     if let Some(uppercase_ratio) = args.uppercase_ratio {
         if uppercase_ratio >= 0.0 && uppercase_ratio <= 1.0 {
             config.uppercase_ratio = uppercase_ratio
         }
+    }
+    if let Some(save_results_flag) = args.save_results {
+        config.save_results = save_results_flag;
     }
 }
 
@@ -247,6 +260,7 @@ mod tests {
             dictionary_path: None,
             uppercase: None,
             uppercase_ratio: None,
+            save_results: None,
         };
         let config = Config::new(args, PathBuf::new()).expect("Unable to create config");
 
@@ -269,6 +283,7 @@ mod tests {
             dictionary_path: None,
             uppercase: None,
             uppercase_ratio: None,
+            save_results: None,
         };
         let config =
             Config::new(args, config_file.path().to_path_buf()).expect("Unable to create config");
@@ -287,19 +302,21 @@ mod tests {
             dictionary_path: None,
             uppercase: None,
             uppercase_ratio: None,
+            save_results: Some(false),
         };
         let config = Config::new(args, PathBuf::new()).expect("Unable to create config");
 
         assert_eq!(config.duration, Duration::from_secs(10));
         assert_eq!(config.numbers, true);
         assert_eq!(config.numbers_ratio, 0.05);
+        assert_eq!(config.save_results, false);
     }
 
     #[test]
     fn args_should_take_precedence_over_config_file() {
         let mut config_file = tempfile::NamedTempFile::new().expect("Unable to create temp file");
         config_file
-            .write_all(r#"{"duration": 10, "numbers": true }"#.as_bytes())
+            .write_all(r#"{"duration": 10, "numbers": true, "save_results": false }"#.as_bytes())
             .expect("Unable to write to temp file");
 
         let args = Args {
@@ -309,6 +326,7 @@ mod tests {
             dictionary_path: Some(String::from("/etc/dict/words")),
             uppercase: None,
             uppercase_ratio: None,
+            save_results: Some(true),
         };
         let config =
             Config::new(args, config_file.path().to_path_buf()).expect("Unable to create config");
@@ -317,5 +335,6 @@ mod tests {
         assert_eq!(config.numbers, false);
         assert_eq!(config.numbers_ratio, 0.05);
         assert_eq!(config.dictionary_path, PathBuf::from("/etc/dict/words"));
+        assert_eq!(config.save_results, true);
     }
 }
