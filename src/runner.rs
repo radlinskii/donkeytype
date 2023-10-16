@@ -28,7 +28,7 @@ use ratatui::{
 use crate::config::Config;
 use crate::expected_input::ExpectedInputInterface;
 use crate::helpers::split_by_char_index;
-use crate::stats::Stats;
+use crate::test_results::{Stats, TestResults};
 
 /// To switch from Normal to Editing press `e`.
 /// To switch from Editing to Normal press `<Esc>`.
@@ -75,7 +75,7 @@ impl Runner {
     /// Method that runs the test.
     ///
     /// It renders the application using the `tui` crate and reacts to user input.
-    pub fn run<B: Backend>(&mut self, terminal: &mut Terminal<B>) -> Result<Stats> {
+    pub fn run<B: Backend>(&mut self, terminal: &mut Terminal<B>) -> Result<TestResults> {
         let mut start_time = Instant::now();
         let mut pause_time = Instant::now();
         let mut is_started = false;
@@ -85,7 +85,11 @@ impl Runner {
         loop {
             if let InputMode::Editing = self.input_mode {
                 if is_started && start_time.elapsed() >= self.config.duration {
-                    return Ok(self.get_stats());
+                    return Ok(TestResults::new(
+                        self.get_stats(),
+                        self.config.clone(),
+                        true,
+                    ));
                 }
             }
 
@@ -115,17 +119,11 @@ impl Runner {
                             }
                             KeyCode::Char('q') => {
                                 // todo return canceled test error and handle it in main
-                                return Ok(Stats {
-                                    wpm: 0.0,
-                                    raw_accuracy: 0.0,
-                                    raw_valid_characters_count: 0,
-                                    raw_mistakes_count: 0,
-                                    raw_typed_characters_count: 0,
-                                    accuracy: 0.0,
-                                    valid_characters_count: 0,
-                                    mistakes_count: 0,
-                                    typed_characters_count: 0,
-                                });
+                                return Ok(TestResults::new(
+                                    Stats::default(),
+                                    self.config.clone(),
+                                    false,
+                                ));
                             }
                             _ => {}
                         },

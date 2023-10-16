@@ -54,7 +54,7 @@ mod config;
 mod expected_input;
 mod helpers;
 mod runner;
-mod stats;
+mod test_results;
 
 use anyhow::{Context, Result};
 use clap::Parser;
@@ -80,7 +80,7 @@ use runner::Runner;
 /// - prepares terminal window
 /// - starts the test
 /// - restores terminal configuration
-/// - prints and handles test results
+/// - if test was completed, prints the results and saves them.
 fn main() -> anyhow::Result<()> {
     let config_file_path = dirs::home_dir()
         .context("Unable to get home directory")?
@@ -99,9 +99,19 @@ fn main() -> anyhow::Result<()> {
     restore_terminal(terminal).context("Unable to restore terminal")?;
 
     match res {
-        Ok(stats) => {
-            stats.print();
-            stats.save_to_file();
+        Ok(test_results) => {
+            if test_results.completed {
+                println!("Test completed.");
+                test_results.print_stats();
+
+                if let Err(err) = test_results.save_to_file() {
+                    eprintln!("{:?}", err);
+
+                    return Err(err);
+                }
+            } else {
+                println!("Test not finished.");
+            }
 
             Ok(())
         }

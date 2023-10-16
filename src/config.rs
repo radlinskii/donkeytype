@@ -54,7 +54,7 @@ use crate::color_scheme::ColorScheme;
 use crate::Args;
 
 /// Main program configuration
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Config {
     pub duration: Duration,
     pub numbers: bool,
