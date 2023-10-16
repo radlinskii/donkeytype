@@ -4,7 +4,9 @@
 //! and save those results and configuration of the test to a file.
 
 use anyhow::{Context, Result};
+use chrono::{DateTime, Local};
 use serde::{Deserialize, Serialize};
+
 use std::fs::create_dir_all;
 
 use crate::config::Config;
@@ -12,6 +14,8 @@ use crate::config::Config;
 /// TestResults struct is combining test statistics with configuration of the test.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TestResults {
+    pub local_datetime: DateTime<Local>,
+
     pub wpm: Option<f64>,
     pub raw_accuracy: Option<f64>,
     pub raw_valid_characters_count: Option<u64>,
@@ -70,6 +74,7 @@ impl TestResults {
     /// creates TestResults object from Stats and Config
     pub fn new(stats: Stats, config: Config, completed: bool) -> Self {
         TestResults {
+            local_datetime: Local::now(),
             // stats
             wpm: Some(stats.wpm),
             raw_accuracy: Some(stats.raw_accuracy),
@@ -124,6 +129,7 @@ impl TestResults {
             csv::Writer::from_path(results_file_path).context("Unable to create CSV Writer")?;
 
         for record in &records {
+            println!("{}", record.local_datetime);
             writer
                 .serialize(record)
                 .context("Unable to serialize one of previous results")?;
