@@ -117,6 +117,9 @@ fn main() -> anyhow::Result<()> {
             );
             println!("Time: {} seconds", duration);
 
+            let csv_file = helpers::dump_data_to_csv(stats, duration)?;
+            println!("Data saved to file: {csv_file}");
+
             Ok(())
         }
         Err(err) => {
