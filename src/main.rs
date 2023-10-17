@@ -84,6 +84,7 @@ use crossterm::{
 };
 use ratatui::{backend::CrosstermBackend, Terminal};
 use std::io;
+use test_results::{read_previous_results, render_results};
 
 use args::Args;
 use config::Config;
@@ -99,51 +100,57 @@ use runner::Runner;
 /// - restores terminal configuration
 /// - if test was completed, prints the results and saves them.
 fn main() -> anyhow::Result<()> {
-    let config_file_path = dirs::home_dir()
-        .context("Unable to get home directory")?
-        .join(".config")
-        .join("donkeytype")
-        .join("donkeytype-config.json");
-
     let args = Args::parse();
-    let config = Config::new(args, config_file_path).context("Unable to create config")?;
-    let expected_input = ExpectedInput::new(&config).context("Unable to create expected input")?;
+
     let mut terminal = configure_terminal().context("Unable to configure terminal")?;
 
-    let mut app = Runner::new(config, expected_input);
-    let res = app.run(&mut terminal);
-
-    match res {
-        Ok(test_results) => {
-            if test_results.completed {
-                if let Err(err) = test_results.render_results(&mut terminal) {
-                    eprintln!("{:?}", err);
-
-                    restore_terminal(terminal).context("Unable to restore terminal")?;
-                    return Err(err);
-                }
-                if test_results.save {
-                    if let Err(err) = test_results.save_to_file() {
-                        eprintln!("{:?}", err);
-
-                        restore_terminal(terminal).context("Unable to restore terminal")?;
-                        return Err(err);
-                    }
-                }
-            } else {
-                println!("Test not finished.");
-            }
-
-            restore_terminal(terminal).context("Unable to restore terminal")?;
+    let res = match &args.history {
+        Some(_) => {
+            let records = read_previous_results().context("Unable to read history results")?;
+            render_results(&mut terminal, &records).context("Unable to render history results")?;
+            restore_terminal(&mut terminal).context("Unable to restore terminal")?;
             Ok(())
         }
-        Err(err) => {
-            println!("Error: {:?}", err);
+        None => {
+            let config_file_path = dirs::home_dir()
+                .context("Unable to get home directory")?
+                .join(".config")
+                .join("donkeytype")
+                .join("donkeytype-config.json");
+            let config = Config::new(args, config_file_path).context("Unable to create config")?;
+            let expected_input =
+                ExpectedInput::new(&config).context("Unable to create expected input")?;
 
-            restore_terminal(terminal).context("Unable to restore terminal")?;
+            let mut app = Runner::new(config, expected_input);
+            let test_results = app
+                .run(&mut terminal)
+                .context("Error while running the test")?;
 
-            Err(err)
+            if test_results.completed {
+                test_results
+                    .render(&mut terminal)
+                    .context("Unable to render test results")?;
+                if test_results.save {
+                    test_results
+                        .save_to_file()
+                        .context("Unable to save results to file")?;
+                }
+                restore_terminal(&mut terminal).context("Unable to restore terminal")?;
+            } else {
+                restore_terminal(&mut terminal).context("Unable to restore terminal")?;
+                println!("Test not finished.");
+            }
+            Ok(())
         }
+    };
+
+    match res {
+        Err(err) => {
+            restore_terminal(&mut terminal).context("Unable to restore terminal")?;
+            eprintln!("{:?}", err);
+            return Err(err);
+        }
+        Ok(_) => Ok(()),
     }
 }
 
@@ -171,7 +178,7 @@ fn configure_terminal() -> Result<Terminal<CrosstermBackend<io::Stdout>>, anyhow
 
 /// restores terminal window configuration
 fn restore_terminal(
-    mut terminal: Terminal<CrosstermBackend<io::Stdout>>,
+    terminal: &mut Terminal<CrosstermBackend<io::Stdout>>,
 ) -> Result<(), anyhow::Error> {
     disable_raw_mode().context("Unable to disable raw mode")?;
     if matches!(supports_keyboard_enhancement(), Ok(true)) {
@@ -253,6 +260,7 @@ mod tests {
             uppercase_ratio: None,
             numbers_ratio: None,
             save_results: None,
+            history: None,
         };
 
         let (config, expected_input, mut terminal) = setup_terminal(args)?;
@@ -286,6 +294,7 @@ mod tests {
             numbers: None,
             numbers_ratio: None,
             save_results: None,
+            history: None,
         };
 
         let (config, expected_input, mut terminal) = setup_terminal(args)?;

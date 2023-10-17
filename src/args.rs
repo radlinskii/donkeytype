@@ -34,4 +34,21 @@ pub struct Args {
     /// indicates if test results should be saved
     #[arg(long)]
     pub save_results: Option<bool>,
+
+    /// Add subcommands here
+    #[command(subcommand)]
+    pub history: Option<SubCommand>,
+}
+
+#[derive(Parser, Debug, Clone)]
+pub enum SubCommand {
+    #[command(about = "Show previous test results in a bar chart.")]
+    History(HistorySubcommandArgs),
+}
+
+#[derive(Parser, Debug, Clone)]
+pub struct HistorySubcommandArgs {
+    // Define subcommand-specific arguments here
+    // #[arg(short, long)]
+    // pub show_date: Option<bool>,
 }
