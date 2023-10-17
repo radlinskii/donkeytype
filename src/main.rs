@@ -76,14 +76,21 @@ mod test_results;
 
 use anyhow::{Context, Result};
 use clap::Parser;
+use crossterm::event::{self, KeyCode};
+use crossterm::terminal::supports_keyboard_enhancement;
+use crossterm::{event::KeyEventKind, execute, ExecutableCommand};
 use crossterm::{
     event::{KeyboardEnhancementFlags, PopKeyboardEnhancementFlags, PushKeyboardEnhancementFlags},
-    execute,
-    terminal::{
-        self, disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen,
-    },
+    terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
-use ratatui::{backend::CrosstermBackend, Terminal};
+use ratatui::{
+    backend::CrosstermBackend,
+    style::{Color, Style},
+    symbols,
+    text::Span,
+    widgets::{Axis, Block, Chart, Dataset, GraphType},
+    Terminal,
+};
 use std::io;
 
 use args::Args;
@@ -114,40 +121,117 @@ fn main() -> anyhow::Result<()> {
     let mut app = Runner::new(config, expected_input);
     let res = app.run(&mut terminal);
 
-    restore_terminal(terminal).context("Unable to restore terminal")?;
-
     match res {
         Ok(test_results) => {
             if test_results.completed {
-                println!("Test completed.\n");
-                test_results.print_stats();
+                if let Err(err) = test_results.render_stats(&mut terminal) {
+                    eprintln!("{:?}", err);
+
+                    restore_terminal(terminal).context("Unable to restore terminal")?;
+                    return Err(err);
+                }
 
                 if test_results.save {
                     if let Err(err) = test_results.save_to_file() {
                         eprintln!("{:?}", err);
 
+                        restore_terminal(terminal).context("Unable to restore terminal")?;
                         return Err(err);
                     }
+                }
+
+                if let Err(err) = show_results() {
+                    eprintln!("{:?}", err);
+
+                    restore_terminal(terminal).context("Unable to restore terminal")?;
+                    return Err(err);
                 }
             } else {
                 println!("Test not finished.");
             }
 
+            restore_terminal(terminal).context("Unable to restore terminal")?;
             Ok(())
         }
         Err(err) => {
             println!("Error: {:?}", err);
+
+            restore_terminal(terminal).context("Unable to restore terminal")?;
 
             Err(err)
         }
     }
 }
 
+fn show_results() -> Result<()> {
+    io::stderr().execute(EnterAlternateScreen)?;
+    enable_raw_mode()?;
+    let mut terminal = Terminal::new(CrosstermBackend::new(io::stderr()))?;
+    terminal.clear()?;
+
+    loop {
+        terminal.draw(|frame| {
+            let area = frame.size();
+
+            let datasets = vec![Dataset::default()
+                .name("data1")
+                .marker(symbols::Marker::Dot)
+                .graph_type(GraphType::Scatter)
+                .style(Style::default().fg(Color::Cyan))
+                .data(&[(0.0, 5.0), (1.0, 6.0), (1.5, 6.434)])];
+
+            frame.render_widget(
+                Chart::new(datasets)
+                    .block(Block::default().title("Chart"))
+                    .x_axis(
+                        Axis::default()
+                            .title(Span::styled("X Axis", Style::default().fg(Color::Red)))
+                            .style(Style::default().fg(Color::White))
+                            .bounds([0.0, 10.0])
+                            .labels(
+                                ["0.0", "5.0", "10.0"]
+                                    .iter()
+                                    .cloned()
+                                    .map(Span::from)
+                                    .collect(),
+                            ),
+                    )
+                    .y_axis(
+                        Axis::default()
+                            .title(Span::styled("Y Axis", Style::default().fg(Color::Red)))
+                            .style(Style::default().fg(Color::White))
+                            .bounds([0.0, 10.0])
+                            .labels(
+                                ["0.0", "5.0", "10.0"]
+                                    .iter()
+                                    .cloned()
+                                    .map(Span::from)
+                                    .collect(),
+                            ),
+                    ),
+                area,
+            );
+        })?;
+
+        if event::poll(std::time::Duration::from_millis(100))? {
+            if let event::Event::Key(key) = event::read()? {
+                if key.kind == KeyEventKind::Press && key.code == KeyCode::Char('q') {
+                    break;
+                }
+            }
+        }
+    }
+
+    io::stderr().execute(LeaveAlternateScreen)?;
+    disable_raw_mode()?;
+    Ok(())
+}
+
 /// prepares terminal window for rendering using tui
 fn configure_terminal() -> Result<Terminal<CrosstermBackend<io::Stdout>>, anyhow::Error> {
     enable_raw_mode().context("Unable to enable raw mode")?;
     let mut stdout = io::stdout();
-    if matches!(terminal::supports_keyboard_enhancement(), Ok(true)) {
+    if matches!(supports_keyboard_enhancement(), Ok(true)) {
         execute!(
             stdout,
             PushKeyboardEnhancementFlags(
@@ -170,7 +254,7 @@ fn restore_terminal(
     mut terminal: Terminal<CrosstermBackend<io::Stdout>>,
 ) -> Result<(), anyhow::Error> {
     disable_raw_mode().context("Unable to disable raw mode")?;
-    if matches!(terminal::supports_keyboard_enhancement(), Ok(true)) {
+    if matches!(supports_keyboard_enhancement(), Ok(true)) {
         execute!(terminal.backend_mut(), PopKeyboardEnhancementFlags)
             .context("Unable to pop keyboard enhancement flags")?;
     }

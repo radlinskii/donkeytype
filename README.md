@@ -15,7 +15,7 @@ or press `backspace` while holding `Option`/`Ctrl` to delete a whole word.
 On the bottom-right corner is a help message saying that to start the test you need to press `'e'` (enter the test) or leave by pressing `'q'`
 When test is running you can see how much time you have left in bottom-left corner.
 
-You can pause the test by pressing <Esc>, to resume it press `'e'` again.
+You can pause the test by pressing `<Esc>`, to resume it press `'e'` again.
 
 WPM (words per minute) score is calculated as amount of typed characters divided by 5 (word), divided by the duration normalized to 60 seconds (minute).
 

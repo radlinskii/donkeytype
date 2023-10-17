@@ -5,9 +5,15 @@
 
 use anyhow::{Context, Result};
 use chrono::{DateTime, Local};
+use crossterm::event::{self, Event, KeyCode};
+use ratatui::{
+    prelude::{Backend, Constraint, Direction, Layout},
+    widgets::Paragraph,
+    Terminal,
+};
 use serde::{Deserialize, Serialize};
 
-use std::fs::create_dir_all;
+use std::{fs::create_dir_all, thread::sleep, time::Duration};
 
 use crate::config::Config;
 
@@ -129,7 +135,6 @@ impl TestResults {
             csv::Writer::from_path(results_file_path).context("Unable to create CSV Writer")?;
 
         for record in &records {
-            println!("{}", record.local_datetime);
             writer
                 .serialize(record)
                 .context("Unable to serialize one of previous results")?;
@@ -147,39 +152,112 @@ impl TestResults {
     }
 
     /// prints statistics in an easy to read format
-    pub fn print_stats(&self) {
-        if let Some(wpm) = self.wpm {
-            println!("WPM: {:.2}", wpm);
+    pub fn render_stats<B: Backend>(&self, terminal: &mut Terminal<B>) -> Result<()> {
+        terminal
+            .draw(|frame| {
+                let areas = Layout::default()
+                    .direction(Direction::Vertical)
+                    .constraints(
+                        [
+                            Constraint::Length(2),
+                            Constraint::Length(1),
+                            Constraint::Length(1),
+                            Constraint::Length(1),
+                            Constraint::Length(1),
+                            Constraint::Length(1),
+                            Constraint::Length(1),
+                            Constraint::Length(1),
+                            Constraint::Length(1),
+                            Constraint::Length(2),
+                            Constraint::Length(1),
+                        ]
+                        .as_ref(),
+                    )
+                    .split(frame.size());
+                frame.render_widget(Paragraph::new("Test completed"), areas[0]);
+                if let Some(wpm) = self.wpm {
+                    frame.render_widget(Paragraph::new(format!("WPM: {:.2}", wpm)), areas[1]);
+                }
+                if let Some(raw_accuracy) = self.raw_accuracy {
+                    frame.render_widget(
+                        Paragraph::new(format!("Raw accuracy: {:.2}%", raw_accuracy)),
+                        areas[2],
+                    );
+                }
+                if let Some(raw_valid_characters_count) = self.raw_valid_characters_count {
+                    frame.render_widget(
+                        Paragraph::new(format!(
+                            "Raw valid characters: {}",
+                            raw_valid_characters_count
+                        )),
+                        areas[3],
+                    );
+                }
+                if let Some(raw_mistakes_count) = self.raw_mistakes_count {
+                    frame.render_widget(
+                        Paragraph::new(format!("Raw mistakes: {}", raw_mistakes_count)),
+                        areas[4],
+                    );
+                }
+                if let Some(raw_typed_characters_count) = self.raw_typed_characters_count {
+                    frame.render_widget(
+                        Paragraph::new(format!(
+                            "Raw characters typed: {}",
+                            raw_typed_characters_count
+                        )),
+                        areas[5],
+                    );
+                }
+                if let Some(accuracy) = self.accuracy {
+                    frame.render_widget(
+                        Paragraph::new(format!("Accuracy after corrections: {:.2}%", accuracy)),
+                        areas[6],
+                    );
+                }
+                if let Some(valid_characters_count) = self.valid_characters_count {
+                    frame.render_widget(
+                        Paragraph::new(format!(
+                            "Valid characters after corrections: {}",
+                            valid_characters_count
+                        )),
+                        areas[7],
+                    );
+                }
+                if let Some(mistakes_count) = self.mistakes_count {
+                    frame.render_widget(
+                        Paragraph::new(format!("Mistakes after corrections: {}", mistakes_count)),
+                        areas[8],
+                    );
+                }
+                if let Some(typed_characters_count) = self.typed_characters_count {
+                    frame.render_widget(
+                        Paragraph::new(format!(
+                            "Characters typed after corrections: {}",
+                            typed_characters_count
+                        )),
+                        areas[9],
+                    );
+                }
+                frame.render_widget(Paragraph::new("Press <Esc> to quit"), areas[10]);
+            })
+            .context("Unable to render stats")?;
+
+        loop {
+            // Poll for key events
+            if event::poll(Duration::from_millis(100)).context("Unable to poll for event")? {
+                if let Event::Key(key) = event::read().context("Unable to read event")? {
+                    match key.code {
+                        KeyCode::Esc => {
+                            break;
+                        }
+                        _ => {}
+                    }
+                }
+            }
+
+            sleep(Duration::from_millis(100));
         }
-        if let Some(raw_accuracy) = self.raw_accuracy {
-            println!("Raw accuracy: {:.2}%", raw_accuracy);
-        }
-        if let Some(raw_valid_characters_count) = self.raw_valid_characters_count {
-            println!("Raw valid characters: {}", raw_valid_characters_count);
-        }
-        if let Some(raw_mistakes_count) = self.raw_mistakes_count {
-            println!("Raw mistakes: {}", raw_mistakes_count);
-        }
-        if let Some(raw_typed_characters_count) = self.raw_typed_characters_count {
-            println!("Raw characters typed: {}", raw_typed_characters_count);
-        }
-        if let Some(accuracy) = self.accuracy {
-            println!("Accuracy after corrections: {:.2}%", accuracy);
-        }
-        if let Some(valid_characters_count) = self.valid_characters_count {
-            println!(
-                "Valid characters after corrections: {}",
-                valid_characters_count
-            );
-        }
-        if let Some(mistakes_count) = self.mistakes_count {
-            println!("Mistakes after corrections: {}", mistakes_count);
-        }
-        if let Some(typed_characters_count) = self.typed_characters_count {
-            println!(
-                "Characters typed after corrections: {}",
-                typed_characters_count
-            );
-        }
+
+        Ok(())
     }
 }
