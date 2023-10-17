@@ -116,7 +116,7 @@ fn main() -> anyhow::Result<()> {
     match res {
         Ok(test_results) => {
             if test_results.completed {
-                if let Err(err) = test_results.render_chart(&mut terminal) {
+                if let Err(err) = test_results.render_results(&mut terminal) {
                     eprintln!("{:?}", err);
 
                     restore_terminal(terminal).context("Unable to restore terminal")?;
