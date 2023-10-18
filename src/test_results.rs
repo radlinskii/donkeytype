@@ -84,6 +84,15 @@ impl Stats {
 impl TestResults {
     /// creates TestResults object from Stats and Config
     pub fn new(stats: Stats, config: Config, completed: bool) -> Self {
+        fn get_dictionary_path(dictionary_path: Option<PathBuf>) -> Option<String> {
+            if let Some(path) = dictionary_path {
+                if let Some(str) = path.to_str() {
+                    return Some(str.to_string());
+                }
+            }
+            Some("default_dictionary".to_string())
+        }
+
         TestResults {
             local_datetime: Local::now(),
             // stats
@@ -100,11 +109,7 @@ impl TestResults {
             duration: Some(config.duration.as_secs()),
             numbers: Some(config.numbers),
             numbers_ratio: Some(config.numbers_ratio),
-            dictionary_path: if let Some(str) = config.dictionary_path.to_str() {
-                Some(str.to_string())
-            } else {
-                None
-            },
+            dictionary_path: get_dictionary_path(config.dictionary_path),
             uppercase: Some(config.uppercase),
             uppercase_ratio: Some(config.uppercase_ratio),
 

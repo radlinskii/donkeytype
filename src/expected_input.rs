@@ -13,6 +13,7 @@ use rand::{seq::SliceRandom, thread_rng, Rng};
 use std::io::Read;
 
 use crate::config::Config;
+use crate::dictionary;
 use crate::helpers::split_by_char_index;
 
 /// Struct used by runner to hold generate the text used for validation and as a placeholder
@@ -28,11 +29,13 @@ impl ExpectedInput {
     /// then replace some words with numbers if specified in config
     /// then save one long string to memory
     pub fn new(config: &Config) -> Result<Self, anyhow::Error> {
-        let mut file = std::fs::File::open(config.dictionary_path.clone())
-            .context("Unable to open dictionary file")?;
-        let mut str = String::new();
-        file.read_to_string(&mut str)
-            .context("Unable to read dictionary file")?;
+        let mut str = dictionary::WORDS.to_string();
+        if let Some(dictionary_path) = &config.dictionary_path {
+            let mut file =
+                std::fs::File::open(dictionary_path).context("Unable to open dictionary file")?;
+            file.read_to_string(&mut str)
+                .context("Unable to read dictionary file")?;
+        }
 
         let mut rng = thread_rng();
         let mut str_vec = str.split("\n").collect::<Vec<&str>>();
@@ -158,7 +161,7 @@ mod tests {
             duration: Duration::from_secs(30),
             numbers: false,
             numbers_ratio: 0.05,
-            dictionary_path: config_file.path().to_path_buf(),
+            dictionary_path: Some(config_file.path().to_path_buf()),
             uppercase: false,
             uppercase_ratio: 0.45,
             colors: ColorScheme::default(),

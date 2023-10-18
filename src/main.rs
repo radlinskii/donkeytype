@@ -69,6 +69,7 @@
 mod args;
 mod color_scheme;
 mod config;
+mod dictionary;
 mod expected_input;
 mod helpers;
 mod runner;
