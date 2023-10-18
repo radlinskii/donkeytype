@@ -16,13 +16,14 @@ jobs:
           #  archive: tar.gz tar.xz tar.zst
           - target: x86_64-apple-darwin
             archive: zip
+            toolchain: 1.70.0-x86_64-apple-darwin
     steps:
       - uses: actions/checkout@master
       - name: Compile and release
         uses: rust-build/rust-build.action@v1.4.3
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TOOLCHAIN_VERSION: 1.70.0
         with:
           RUSTTARGET: ${{ matrix.target }}
           ARCHIVE_TYPES: ${{ matrix.archive }}
+          TOOLCHAIN_VERSION: ${{ matrix.toolchain }}
