@@ -7,7 +7,7 @@
 //!
 //! Dictionary file should be a text file in format of single words per line.
 
-use anyhow::Context;
+use anyhow::{Context, Result};
 use mockall::automock;
 use rand::{seq::SliceRandom, thread_rng, Rng};
 use std::io::Read;
@@ -50,7 +50,8 @@ impl ExpectedInput {
         }
 
         if config.uppercase == true {
-            create_uppercase_words(&mut string_vec, words_start_pos, config.uppercase_ratio);
+            create_uppercase_words(&mut string_vec, words_start_pos, config.uppercase_ratio)
+                .context("Unable to create uppercase words")?;
             str_vec = string_vec.iter().map(|s| s.as_str()).collect();
         }
 
@@ -91,16 +92,25 @@ fn replace_words_with_numbers(
     return change_to_num_threshold - 1;
 }
 
-fn create_uppercase_words(string_vec: &mut Vec<String>, pos: usize, uppercase_ratio: f64) {
+fn create_uppercase_words(
+    string_vec: &mut Vec<String>,
+    pos: usize,
+    uppercase_ratio: f64,
+) -> Result<()> {
     let num_uppercase_words = (uppercase_ratio * string_vec[pos..].len() as f64).round() as usize;
     for i in pos..pos + num_uppercase_words {
         if string_vec[i] != "" {
             let mut v: Vec<char> = string_vec[i].chars().collect();
-            v[0] = v[0].to_uppercase().nth(0).unwrap();
+            v[0] = v[0]
+                .to_uppercase()
+                .nth(0)
+                .context("Unable to get first character of a word")?;
             let s: String = v.into_iter().collect();
             string_vec[i] = s;
         }
     }
+
+    Ok(())
 }
 
 /// extracted to trait to create mock with `mockall` crate

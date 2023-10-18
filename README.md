@@ -2,7 +2,8 @@
 
 a _very_ minimalistic _cli_ typing test.
 
-![donkeytype demonstration](https://github.com/radlinskii/donkeytype/assets/26116041/ecd835f5-e50b-4bc6-aea4-75f9ecde5de7)
+![gif demonstraiting how the program works](https://github.com/radlinskii/donkeytype/assets/26116041/4c2a1b6d-e70e-4631-8438-9259cc780a36)
+
 
 ## How it works
 
@@ -15,7 +16,7 @@ or press `backspace` while holding `Option`/`Ctrl` to delete a whole word.
 On the bottom-right corner is a help message saying that to start the test you need to press `'e'` (enter the test) or leave by pressing `'q'`
 When test is running you can see how much time you have left in bottom-left corner.
 
-You can pause the test by pressing <Esc>, to resume it press `'e'` again.
+You can pause the test by pressing `<Esc>`, to resume it press `'e'` again.
 
 WPM (words per minute) score is calculated as amount of typed characters divided by 5 (word), divided by the duration normalized to 60 seconds (minute).
 
@@ -24,17 +25,33 @@ WPM (words per minute) score is calculated as amount of typed characters divided
 ### Installation
 
 For now there is no deployment environment setup.
-You can clone the repo, and run the main program with cargo:
+You can clone the repo, and run the main program with default configuration using cargo:
 
 ```shell
 cargo run
 ```
 
-To start the program with default config.
+
+To view the history of results in a bar chart you can run:
+
+```shell
+cargo run -- history
+```
+
+<img width="1426" alt="picture demonstraiting bar chart with history data" src="https://github.com/radlinskii/donkeytype/assets/26116041/352c68fc-28a3-4ea2-8800-d74b8d759ddd">
+
+
+To see all available options run:
+
+```shell
+cargo run -- --help
+```
 
 > So far it was only tested on MacOS.
+> Needs testing on Linux
+> Not supporting Windows yet (different file paths)
 
-### Configuring
+### Configuration
 
 For now there are only three options that are read from config.
 Configuration will grow when more features are added (_different modes_, _different languages_, _configuring colors_).

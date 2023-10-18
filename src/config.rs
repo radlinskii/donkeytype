@@ -261,6 +261,7 @@ mod tests {
             uppercase: None,
             uppercase_ratio: None,
             save_results: None,
+            history: None,
         };
         let config = Config::new(args, PathBuf::new()).expect("Unable to create config");
 
@@ -284,6 +285,7 @@ mod tests {
             uppercase: None,
             uppercase_ratio: None,
             save_results: None,
+            history: None,
         };
         let config =
             Config::new(args, config_file.path().to_path_buf()).expect("Unable to create config");
@@ -303,6 +305,7 @@ mod tests {
             uppercase: None,
             uppercase_ratio: None,
             save_results: Some(false),
+            history: None,
         };
         let config = Config::new(args, PathBuf::new()).expect("Unable to create config");
 
@@ -327,6 +330,7 @@ mod tests {
             uppercase: None,
             uppercase_ratio: None,
             save_results: Some(true),
+            history: None,
         };
         let config =
             Config::new(args, config_file.path().to_path_buf()).expect("Unable to create config");
