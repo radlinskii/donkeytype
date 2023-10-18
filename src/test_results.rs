@@ -177,7 +177,7 @@ impl TestResults {
                 frame.render_widget(
                     Paragraph::new("Press <Esc> to quit")
                         .alignment(ratatui::prelude::Alignment::Right)
-                        .yellow(),
+                        .green(),
                     areas[0],
                 );
 
@@ -295,7 +295,7 @@ pub fn render_results<B: Backend>(
             frame.render_widget(
                 Paragraph::new("Press <Esc> to quit")
                     .alignment(ratatui::prelude::Alignment::Right)
-                    .yellow(),
+                    .green(),
                 areas[0],
             );
 
