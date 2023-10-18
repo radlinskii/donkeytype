@@ -297,7 +297,7 @@ impl Runner {
         for ((input_char_index, input_char), expected_input_char) in
             self.input.chars().enumerate().zip(expected_input.chars())
         {
-            let input: Paragraph<'_> = Paragraph::new(input_char.to_string()).style(
+            let input: Paragraph<'_> = Paragraph::new(expected_input_char.to_string()).style(
                 match input_char == expected_input_char {
                     true => Style::default()
                         .bg(self.config.colors.correct_match_bg)
