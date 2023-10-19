@@ -4,7 +4,6 @@ a _very_ minimalistic _cli_ typing test.
 
 ![gif demonstraiting how the program works](https://github.com/radlinskii/donkeytype/assets/26116041/4c2a1b6d-e70e-4631-8438-9259cc780a36)
 
-
 ## How it works
 
 When the program is run you will see the expected input displayed at the top of your terminal window.
@@ -31,7 +30,6 @@ You can clone the repo, and run the main program with default configuration usin
 cargo run
 ```
 
-
 To view the history of results in a bar chart you can run:
 
 ```shell
@@ -39,7 +37,6 @@ cargo run -- history
 ```
 
 <img width="1426" alt="picture demonstraiting bar chart with history data" src="https://github.com/radlinskii/donkeytype/assets/26116041/352c68fc-28a3-4ea2-8800-d74b8d759ddd">
-
 
 To see all available options run:
 
@@ -58,14 +55,16 @@ Configuration will grow when more features are added (_different modes_, _differ
 
 Default config looks like this:
 
-| name              | default value          | type in JSON | description                                                               |
-| ----------------- | ---------------------- | ------------ | ------------------------------------------------------------------------- |
-| `duration`        | `30`                   | number       | duration of the test in seconds                                           |
-| `numbers`         | `false`                | boolean      | flag indicating if numbers should be inserted in expected input           |
-| `numbers_ratio`   | `0.05` if numbers=TRUE | number       | ratio for putting numbers in the test                                     |
-| `uppercase`       | `false`                | boolean      | flag indicating if uppercase letters should be inserted in expected input |
-| `uppercase_ratio` | `0.25`                 | boolean      | ratio for putting uppercase letters in test                               |
-| `dictionary_path` | `"src/dict/words.txt"` | string       | dictionary words to sample from while creating test's expected input      |
+| name              | default value               | type in JSON | description                                                                            |
+| ----------------- | --------------------------- | ------------ | -------------------------------------------------------------------------------------- |
+| `duration`        | `30`                        | number       | duration of the test in seconds                                                        |
+| `numbers`         | `false`                     | boolean      | flag indicating if numbers should be inserted in expected input                        |
+| `numbers_ratio`   | `0.05` (if numbers=TRUE)    | number       | ratio for putting numbers in the test                                                  |
+| `uppercase`       | `false`                     | boolean      | flag indicating if uppercase letters should be inserted in expected input              |
+| `uppercase_ratio` | `0.15`                      | boolean      | ratio for putting uppercase letters in test                                            |
+| `dictionary_path` | `None` (builtin dictionary) | string       | path to file with dictionary words to sample from while creating test's expected input |
+| `save_results`    | `true`                      | boolean      | flag indicating if results should be saved to a file                                   |
+| `dictionary_path` | `"src/dict/words.txt"`      | string       | dictionary words to sample from while creating test's expected input                   |
 
 > NOTE: If provided `numbers_ratio` is not between `0` to `1.0`, Default `numbers_ratio = 0.05` will be used.
 > Same happens with `uppercase_ratio`.
