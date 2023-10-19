@@ -4,36 +4,44 @@ a _very_ minimalistic _cli_ typing test.
 
 ![gif demonstrating how the program works](https://github.com/radlinskii/donkeytype/assets/26116041/4c2a1b6d-e70e-4631-8438-9259cc780a36)
 
-## How it works
+## How it Works
 
-When the program is run you will see the expected input displayed at the top of your terminal window.
-This text is a placeholder, and this is the input that you should write when the test is started.
-Now you should write this text as fast as you can.
-If you make a mistake you can press `backspace` to delete a single character,
-or press `backspace` while holding `Option`/`Ctrl` to delete a whole word.
+When you run the program, you'll find the expected input displayed at the top of your terminal window. This text serves as a placeholder and represents what you should type when the test begins. Your goal is to type this text as quickly as possible. If you make a mistake, you can press the `backspace` key to delete a single character or hold down `Option`/`Ctrl` and press `backspace` to delete an entire word.
 
-On the bottom-right corner is a help message saying that to start the test you need to press `'e'` (enter the test) or leave by pressing `'q'`
-When test is running you can see how much time you have left in bottom-left corner.
+In the bottom-right corner of the screen, a helpful message prompts you to start the test by pressing `'e'` (to enter the test) or exit by pressing `'q'`.
 
-You can pause the test by pressing `<Esc>`, to resume it press `'e'` again.
+While the test is running, you'll be able to monitor the time remaining in the bottom-left corner of the screen.
 
-WPM (words per minute) score is calculated as amount of typed characters divided by 5 (word), divided by the duration normalized to 60 seconds (minute).
+To pause the test, simply press `<Esc>`. To resume, press `'e'` again.
+
+Your WPM (words per minute) score is calculated based on the number of typed characters divided by 5 (word), and normalized to a 60-second timeframe (minute).
+
+
+> Note: So far it was only tested on `MacOS`.
+> Needs testing on `Linux`
+> No support for `Windows` yet (different file paths)
 
 ## Usage
 
 ### Installation
 
-For now there is no deployment environment setup.
-You can clone the repo, and run the main program with default configuration using cargo:
+Go to [the latest release](https://github.com/radlinskii/donkeytype/releases/latest), download the compressed binary and unpack it locally.
+Then to run the main program with default configuration simply run the executable binary in your terminal:
 
 ```shell
-cargo run
+./donkeytype
+```
+
+You can move the binary to e.g. `~/.local/bin` folder (or any other folder added to your $PATH) to run it from anywhere:
+```shell
+mv ~/Downloads/donkeytype ~/.local/bin/donkeytype
+donkeytype --version
 ```
 
 To view the history of results in a bar chart you can run:
 
 ```shell
-cargo run -- history
+./donkeytype history
 ```
 
 <img width="1426" alt="picture demonstraiting bar chart with history data" src="https://github.com/radlinskii/donkeytype/assets/26116041/352c68fc-28a3-4ea2-8800-d74b8d759ddd">
@@ -41,12 +49,8 @@ cargo run -- history
 To see all available options run:
 
 ```shell
-cargo run -- --help
+./donkeytype --help
 ```
-
-> So far it was only tested on MacOS.
-> Needs testing on Linux
-> Not supporting Windows yet (different file paths)
 
 ### Configuration
 
@@ -72,13 +76,13 @@ Default config looks like this:
 You can provide this config as options when running the program like so:
 
 ```shell
-cargo run -- --duration 60 --numbers true --uppercase true
+./donkeytype --duration 60 --numbers true --uppercase true
 ```
 
 To get all the available options run
 
 ```shell
-cargo run -- --help
+./donkeytype --help
 ```
 
 You can also put all the options inside config file in `~/.config/donkeytype/donkeytype-config.json`:
@@ -106,7 +110,12 @@ You can also put all the options inside config file in `~/.config/donkeytype/don
 
 ### Prerequisites
 
-You need to have [rust](https://www.rust-lang.org/) installed to run & develop this program locally.
+You need to have [rust toolchain](https://www.rust-lang.org/) installed locally to develop this program.
+
+### Guidelines
+
+Try cover your changes with unit tests whenever possible.
+Before opening a PR run locally `rustfmt` to format your changes and make sure tests are passing with `cargo test`.
 
 ## Contributing
 
@@ -130,6 +139,22 @@ To submit a contribution, follow these general steps:
 ### Hacktoberfest 2023
 
 If you found this repo because of [Hacktoberfest 2023](https://hacktoberfest.com/), make sure you familiarize yourself with [participation rules for contributors](https://hacktoberfest.com/participation/#contributors).
+
+## Uninstallation
+
+If you want to remove `donkeytype` from your system you simply remove the executable binary from wherever you've downloaded it to.
+
+Additionally to remove the history of results run:
+
+```shell
+rm -rf ~/.local/share/donkeytype
+```
+
+and if you've created a configuration file remove it too:
+
+```shell
+rm -rf ~/.config/donkeytype
+```
 
 ## License
 
