@@ -100,59 +100,62 @@ use runner::Runner;
 /// - starts the test
 /// - restores terminal configuration
 /// - if test was completed, prints the results and saves them.
-fn main() -> anyhow::Result<()> {
+fn main() -> Result<()> {
     let args = Args::parse();
 
     let mut terminal = configure_terminal().context("Unable to configure terminal")?;
 
     let res = match &args.history {
-        Some(_) => {
-            let records = read_previous_results().context("Unable to read history results")?;
-            render_results(&mut terminal, &records).context("Unable to render history results")?;
-            restore_terminal(&mut terminal).context("Unable to restore terminal")?;
-            Ok(())
-        }
-        None => {
-            let config_file_path = dirs::home_dir()
-                .context("Unable to get home directory")?
-                .join(".config")
-                .join("donkeytype")
-                .join("donkeytype-config.json");
-            let config = Config::new(args, config_file_path).context("Unable to create config")?;
-            let expected_input =
-                ExpectedInput::new(&config).context("Unable to create expected input")?;
-
-            let mut app = Runner::new(config, expected_input);
-            let test_results = app
-                .run(&mut terminal)
-                .context("Error while running the test")?;
-
-            if test_results.completed {
-                test_results
-                    .render(&mut terminal)
-                    .context("Unable to render test results")?;
-                if test_results.save {
-                    test_results
-                        .save_to_file()
-                        .context("Unable to save results to file")?;
-                }
-                restore_terminal(&mut terminal).context("Unable to restore terminal")?;
-            } else {
-                restore_terminal(&mut terminal).context("Unable to restore terminal")?;
-                println!("Test not finished.");
-            }
-            Ok(())
-        }
+        Some(_) => handle_history_command(&mut terminal),
+        None => handle_main_command(&mut terminal, args),
     };
 
     match res {
         Err(err) => {
             restore_terminal(&mut terminal).context("Unable to restore terminal")?;
-            eprintln!("{:?}", err);
             return Err(err);
         }
         Ok(_) => Ok(()),
     }
+}
+
+fn handle_history_command(terminal: &mut Terminal<CrosstermBackend<io::Stdout>>) -> Result<()> {
+    let records = read_previous_results().context("Unable to read history results")?;
+    render_results(terminal, &records).context("Unable to render history results")?;
+    restore_terminal(terminal).context("Unable to restore terminal")?;
+    Ok(())
+}
+
+fn handle_main_command(
+    terminal: &mut Terminal<CrosstermBackend<io::Stdout>>,
+    args: Args,
+) -> Result<()> {
+    let config_file_path = dirs::home_dir()
+        .context("Unable to get home directory")?
+        .join(".config")
+        .join("donkeytype")
+        .join("donkeytype-config.json");
+    let config = Config::new(args, config_file_path).context("Unable to create config")?;
+    let expected_input = ExpectedInput::new(&config).context("Unable to create expected input")?;
+
+    let mut app = Runner::new(config, expected_input);
+    let test_results = app.run(terminal).context("Error while running the test")?;
+
+    if test_results.completed {
+        test_results
+            .render(terminal)
+            .context("Unable to render test results")?;
+        if test_results.save {
+            test_results
+                .save_to_file()
+                .context("Unable to save results to file")?;
+        }
+        restore_terminal(terminal).context("Unable to restore terminal")?;
+    } else {
+        restore_terminal(terminal).context("Unable to restore terminal")?;
+        println!("Test not finished.");
+    }
+    Ok(())
 }
 
 /// prepares terminal window for rendering using tui
