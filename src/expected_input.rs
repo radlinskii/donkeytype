@@ -31,6 +31,7 @@ impl ExpectedInput {
     pub fn new(config: &Config) -> Result<Self, anyhow::Error> {
         let mut str = dictionary::WORDS.to_string();
         if let Some(dictionary_path) = &config.dictionary_path {
+            str = String::from("");
             let mut file =
                 std::fs::File::open(dictionary_path).context("Unable to open dictionary file")?;
             file.read_to_string(&mut str)
