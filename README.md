@@ -2,7 +2,7 @@
 
 a _very_ minimalistic _cli_ typing test.
 
-![gif demonstraiting how the program works](https://github.com/radlinskii/donkeytype/assets/26116041/4c2a1b6d-e70e-4631-8438-9259cc780a36)
+![gif demonstrating how the program works](https://github.com/radlinskii/donkeytype/assets/26116041/4c2a1b6d-e70e-4631-8438-9259cc780a36)
 
 ## How it works
 
