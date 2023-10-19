@@ -2,15 +2,15 @@
 //!
 //! Default options of configuration are:
 //!
-//! | name              | default value          | type in JSON | description                                                               |
-//! | ----------------- | ---------------------- | ------------ | ------------------------------------------------------------------------- |
-//! | `duration`        | `30`                   | number       | duration of the test in seconds                                           |
-//! | `numbers`         | `false`                | boolean      | flag indicating if numbers should be inserted in expected input           |
-//! | `numbers_ratio`   | `0.05` if numbers=TRUE | number       | ratio for putting numbers in the test                                     |
-//! | `uppercase`       | `false`                | boolean      | flag indicating if uppercase letters should be inserted in expected input |
-//! | `uppercase_ratio` | `0.15`                 | boolean      | ratio for putting uppercase letters in test                               |
-//! | `dictionary_path` | `"src/dict/words.txt"` | string       | dictionary words to sample from while creating test's expected input      |
-//! | `save_results`    | `true`                 | boolean      | flag indicating if results should be saved to a file                      |
+//! | name              | default value                | type in JSON | description                                                                             |
+//! | ----------------- | ---------------------------- | ------------ | --------------------------------------------------------------------------------------- |
+//! | `duration`        | `30`                         | number       | duration of the test in seconds                                                         |
+//! | `numbers`         | `false`                      | boolean      | flag indicating if numbers should be inserted in expected input                         |
+//! | `numbers_ratio`   | `0.05` (if numbers=TRUE)     | number       | ratio for putting numbers in the test                                                   |
+//! | `uppercase`       | `false`                      | boolean      | flag indicating if uppercase letters should be inserted in expected input               |
+//! | `uppercase_ratio` | `0.15`                       | boolean      | ratio for putting uppercase letters in test                                             |
+//! | `dictionary_path` |  `None` (builtin dictionary) | string       | path to file with dictionary words to sample from while creating test's expected input  |
+//! | `save_results`    | `true`                       | boolean      | flag indicating if results should be saved to a file                                    |
 //!
 //! NOTE: If provided `numbers_ratio` is not between `0` to `1.0`, Default `numbers_ratio = 0.05` will be used.
 //! NOTE: If provided `uppercase_ratio` is not between `0` to `1.0`, Default `numbers_ratio = 0.15` will be used.
@@ -64,7 +64,7 @@ pub struct Config {
     pub duration: Duration,
     pub numbers: bool,
     pub numbers_ratio: f64,
-    pub dictionary_path: PathBuf,
+    pub dictionary_path: Option<PathBuf>,
     pub uppercase: bool,
     pub uppercase_ratio: f64,
     pub colors: ColorScheme,
@@ -101,7 +101,7 @@ impl Config {
             duration: Duration::from_secs(30),
             numbers: false,
             numbers_ratio: 0.05,
-            dictionary_path: PathBuf::from("src/dict/words.txt"),
+            dictionary_path: None,
             uppercase: false,
             uppercase_ratio: 0.15,
             colors: ColorScheme::default(),
@@ -159,7 +159,7 @@ fn augment_config_with_config_file(config: &mut Config, mut config_file: fs::Fil
         }
 
         if let Some(dictionary_path) = config_from_file.dictionary_path {
-            config.dictionary_path = PathBuf::from(dictionary_path);
+            config.dictionary_path = Some(PathBuf::from(dictionary_path));
         }
 
         if let Some(uppercase) = config_from_file.uppercase {
@@ -221,7 +221,7 @@ fn augment_config_with_args(config: &mut Config, args: Args) {
         config.duration = Duration::from_secs(duration);
     }
     if let Some(dictionary_path) = args.dictionary_path {
-        config.dictionary_path = PathBuf::from(dictionary_path);
+        config.dictionary_path = Some(PathBuf::from(dictionary_path));
     }
     if let Some(uppercase_flag) = args.uppercase {
         config.uppercase = uppercase_flag
@@ -338,7 +338,10 @@ mod tests {
         assert_eq!(config.duration, Duration::from_secs(20));
         assert_eq!(config.numbers, false);
         assert_eq!(config.numbers_ratio, 0.05);
-        assert_eq!(config.dictionary_path, PathBuf::from("/etc/dict/words"));
+        assert_eq!(
+            config.dictionary_path,
+            Some(PathBuf::from("/etc/dict/words"))
+        );
         assert_eq!(config.save_results, true);
     }
 }

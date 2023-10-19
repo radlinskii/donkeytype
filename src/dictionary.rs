@@ -1,4 +1,6 @@
-the
+//! module with words used to generate expected input
+
+pub const WORDS: &str = "the
 of
 to
 and
@@ -997,4 +999,4 @@ meant
 quotient
 teeth
 shell
-neck
+neck";
