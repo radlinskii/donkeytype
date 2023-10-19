@@ -15,7 +15,12 @@ use ratatui::{
 };
 use serde::{Deserialize, Serialize};
 
-use std::{fs::create_dir_all, path::PathBuf, thread::sleep, time::Duration};
+use std::{
+    fs::{create_dir_all, File},
+    path::PathBuf,
+    thread::sleep,
+    time::Duration,
+};
 
 use crate::{
     config::Config,
@@ -120,8 +125,6 @@ impl TestResults {
 
     /// saves test statistics and configuration to a file in users home directory
     pub fn save_to_file(&self) -> Result<(), anyhow::Error> {
-        create_results_dir_if_not_exist()
-            .context("Unable to ensure that results directory exist")?;
         let results_file_path =
             get_results_file_path().context("Unable to ge results file path")?;
 
@@ -429,7 +432,19 @@ fn create_results_dir_if_not_exist() -> Result<()> {
     Ok(())
 }
 
+fn create_results_file_if_not_exist() -> Result<()> {
+    let results_file_path = get_results_file_path().context("Unable to get results file path")?;
+
+    if !results_file_path.exists() {
+        File::create(results_file_path.clone()).context("Unable to create results file")?;
+    }
+
+    Ok(())
+}
+
 pub fn read_previous_results() -> Result<Vec<TestResults>> {
+    create_results_dir_if_not_exist().context("Unable to ensure that results directory exist")?;
+    create_results_file_if_not_exist().context("Unable to ensure that results file exist")?;
     let results_file_path = get_results_file_path().context("Unable to get results file path")?;
 
     let mut reader =
