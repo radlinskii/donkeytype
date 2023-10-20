@@ -404,11 +404,15 @@ fn render_chart(
 }
 
 fn get_results_dir_path() -> Result<PathBuf> {
-    let dir_path = dirs::home_dir()
-        .context("Unable to get home directory")?
-        .join(".local")
-        .join("share")
-        .join("donkeytype");
+    let dir_path = if cfg!(target_os = "windows") {
+        dirs::config_local_dir().context("Unable to get local config directory")?
+    } else {
+        dirs::home_dir()
+            .context("Unable to get home directory")?
+            .join(".local")
+            .join("share")
+    }
+    .join("donkeytype");
 
     Ok(dir_path)
 }
