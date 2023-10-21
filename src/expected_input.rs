@@ -62,8 +62,13 @@ impl ExpectedInput {
         }
 
         if config.symbols == true {
-            replace_words_with_symbols(&mut string_vec, &mut rng, words_start_pos, config.symbols_ratio)
-                .context("Unable to create symbols")?;
+            replace_words_with_symbols(
+                &mut string_vec,
+                &mut rng,
+                words_start_pos,
+                config.symbols_ratio,
+            )
+            .context("Unable to create symbols")?;
             str_vec = string_vec.iter().map(|s| s.as_str()).collect();
         }
 
