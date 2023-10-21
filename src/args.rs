@@ -38,6 +38,14 @@ pub struct Args {
     /// Add subcommands here
     #[command(subcommand)]
     pub history: Option<SubCommand>,
+
+    /// indicates if test should include symbols
+    #[arg(short, long)]
+    pub symbols: Option<bool>,
+
+    /// symbols-ratio argument
+    #[arg(long)]
+    pub symbols_ratio: Option<f64>,
 }
 
 #[derive(Parser, Debug, Clone)]

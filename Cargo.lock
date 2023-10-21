@@ -308,6 +308,7 @@ dependencies = [
  "mockall",
  "predicates 3.0.4",
  "rand",
+ "random_str",
  "ratatui",
  "serde",
  "serde_json",
@@ -679,6 +680,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ec0be4795e2f6a28069bec0b5ff3e2ac9bafc99e6a9a7dc3547996c5c816922c"
 dependencies = [
  "getrandom",
+]
+
+[[package]]
+name = "random_str"
+version = "0.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4f680682929acbd1db498180918f82775ba6140320e8fd900f043a93fd0bb3af"
+dependencies = [
+ "rand",
 ]
 
 [[package]]

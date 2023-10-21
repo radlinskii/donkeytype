@@ -16,6 +16,8 @@ use crate::config::Config;
 use crate::dictionary;
 use crate::helpers::split_by_char_index;
 
+use random_str as random;
+
 /// Struct used by runner to hold generate the text used for validation and as a placeholder
 #[derive(Debug)]
 pub struct ExpectedInput {
@@ -56,6 +58,12 @@ impl ExpectedInput {
         if config.uppercase == true {
             create_uppercase_words(&mut string_vec, words_start_pos, config.uppercase_ratio)
                 .context("Unable to create uppercase words")?;
+            str_vec = string_vec.iter().map(|s| s.as_str()).collect();
+        }
+
+        if config.symbols == true {
+            replace_words_with_symbols(&mut string_vec, &mut rng, words_start_pos, config.symbols_ratio)
+                .context("Unable to create symbols")?;
             str_vec = string_vec.iter().map(|s| s.as_str()).collect();
         }
 
@@ -117,6 +125,29 @@ fn create_uppercase_words(
     Ok(())
 }
 
+fn replace_words_with_symbols(
+    string_vec: &mut Vec<String>,
+    rng: &mut rand::rngs::ThreadRng,
+    pos: usize,
+    symbols_ratio: f64,
+) -> Result<()> {
+    let num_symbols = (symbols_ratio * string_vec[pos..].len() as f64).round() as usize;
+    for i in pos..pos + num_symbols {
+        if string_vec[i] != "" {
+            let mut v: Vec<char> = string_vec[i].chars().collect();
+            if v.len() >= 2 {
+                //start from one to avoid overriding uppercase letters
+                let index: usize = rng.gen_range(1..v.len());
+                v[index] = random::get_symbol();
+                let s: String = v.into_iter().collect();
+                string_vec[i] = s;
+            }
+        }
+    }
+
+    Ok(())
+}
+
 /// extracted to trait to create mock with `mockall` crate
 #[automock]
 pub trait ExpectedInputInterface {
@@ -167,6 +198,8 @@ mod tests {
             uppercase_ratio: 0.45,
             colors: ColorScheme::default(),
             save_results: false,
+            symbols: false,
+            symbols_ratio: 0.2,
         };
 
         let expected_input = ExpectedInput::new(&config).expect("unable to create expected input");

@@ -265,6 +265,8 @@ mod tests {
             numbers_ratio: None,
             save_results: None,
             history: None,
+            symbols: None,
+            symbols_ratio: None,
         };
 
         let (config, expected_input, mut terminal) = setup_terminal(args)?;
@@ -299,6 +301,8 @@ mod tests {
             numbers_ratio: None,
             save_results: None,
             history: None,
+            symbols: None,
+            symbols_ratio: None,
         };
 
         let (config, expected_input, mut terminal) = setup_terminal(args)?;

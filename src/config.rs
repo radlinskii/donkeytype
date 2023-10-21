@@ -69,6 +69,8 @@ pub struct Config {
     pub uppercase_ratio: f64,
     pub colors: ColorScheme,
     pub save_results: bool,
+    pub symbols: bool,
+    pub symbols_ratio: f64,
 }
 
 /// Used by `serde` crate to parse config file into a rust struct
@@ -82,6 +84,8 @@ struct ConfigFile {
     pub uppercase_ratio: Option<f64>,
     pub colors: Option<ConfigFileColorScheme>,
     pub save_results: Option<bool>,
+    pub symbols: Option<bool>,
+    pub symbols_ratio: Option<f64>,
 }
 
 /// Struct used be `serde` crate to parse colors config from config file
@@ -102,10 +106,12 @@ impl Config {
             numbers: false,
             numbers_ratio: 0.05,
             dictionary_path: None,
-            uppercase: false,
+            uppercase: true,
             uppercase_ratio: 0.15,
             colors: ColorScheme::default(),
             save_results: true,
+            symbols: true,
+            symbols_ratio: 0.2,
         }
     }
 
@@ -193,6 +199,16 @@ fn augment_config_with_config_file(config: &mut Config, mut config_file: fs::Fil
         if let Some(save_results) = config_from_file.save_results {
             config.save_results = save_results;
         }
+
+        if let Some(symbols) = config_from_file.symbols {
+            config.symbols = symbols;
+        }
+
+        if let Some(symbols_ratio) = config_from_file.symbols_ratio {
+            if symbols_ratio >= 0.0 && symbols_ratio <= 1.0 {
+                config.symbols_ratio = symbols_ratio
+            }
+        }
     }
 
     Ok(())
@@ -234,6 +250,14 @@ fn augment_config_with_args(config: &mut Config, args: Args) {
     if let Some(save_results_flag) = args.save_results {
         config.save_results = save_results_flag;
     }
+    if let Some(symbols_flag) = args.symbols {
+        config.symbols = symbols_flag
+    }
+    if let Some(symbols_ratio) = args.symbols_ratio {
+        if symbols_ratio >= 0.0 && symbols_ratio <= 1.0 {
+            config.symbols_ratio = symbols_ratio
+        }
+    }
 }
 
 #[cfg(test)]
@@ -262,6 +286,8 @@ mod tests {
             uppercase_ratio: None,
             save_results: None,
             history: None,
+            symbols: None,
+            symbols_ratio: None,
         };
         let config = Config::new(args, PathBuf::new()).expect("Unable to create config");
 
@@ -286,6 +312,8 @@ mod tests {
             uppercase_ratio: None,
             save_results: None,
             history: None,
+            symbols: None,
+            symbols_ratio: None,
         };
         let config =
             Config::new(args, config_file.path().to_path_buf()).expect("Unable to create config");
@@ -306,6 +334,8 @@ mod tests {
             uppercase_ratio: None,
             save_results: Some(false),
             history: None,
+            symbols: None,
+            symbols_ratio: None,
         };
         let config = Config::new(args, PathBuf::new()).expect("Unable to create config");
 
@@ -331,6 +361,8 @@ mod tests {
             uppercase_ratio: None,
             save_results: Some(true),
             history: None,
+            symbols: None,
+            symbols_ratio: None,
         };
         let config =
             Config::new(args, config_file.path().to_path_buf()).expect("Unable to create config");
