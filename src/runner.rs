@@ -409,7 +409,7 @@ impl Runner {
         let num_correct_words:u32 = TestResults::get_total_words_correct(&self.input, &expected_input_str, typed_characters_count);
 
         Stats {
-            wpm: valid_characters_count as f64 / 5.0 * 60.0 / self.config.duration.as_secs() as f64,
+            wpm: num_correct_words as f64 * 60.0 / self.config.duration.as_secs() as f64,
 
             raw_accuracy: get_percentage(
                 self.raw_valid_characters_count as f64,
