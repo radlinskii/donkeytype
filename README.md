@@ -94,11 +94,11 @@ You can also put all the options inside config file in `~/.config/donkeytype/don
     "numbers": true,
     "numbers_ratio": 0.1,
     "uppercase": true,
-    "uppercase_ratio": 0.3
+    "uppercase_ratio": 0.3,
     "colors": {
         "correct_match_fg": "green",
         "correct_match_bg": "white",
-        "incorrect_match_fg": "#ff00ff"
+        "incorrect_match_fg": "#ff00ff",
         "incorrect_match_bg": "#0f000f"
     }
 }
