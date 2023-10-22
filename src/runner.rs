@@ -388,7 +388,9 @@ impl Runner {
     fn get_stats(&self) -> Stats {
         let typed_characters = self.input.chars();
         let typed_characters_count = typed_characters.clone().count();
-        let expected_input_str = self.expected_input.get_string_till_space(typed_characters_count);
+        let expected_input_str = self
+            .expected_input
+            .get_string_till_space(typed_characters_count);
         let expected_characters = expected_input_str.chars();
 
         let mistakes_count = typed_characters
@@ -406,7 +408,11 @@ impl Runner {
             numerator / denominator * 100.0
         }
 
-        let num_correct_words:u32 = TestResults::get_total_words_correct(&self.input, &expected_input_str, typed_characters_count);
+        let num_correct_words: u32 = TestResults::get_total_words_correct(
+            &self.input,
+            &expected_input_str,
+            typed_characters_count,
+        );
 
         Stats {
             wpm: num_correct_words as f64 * 60.0 / self.config.duration.as_secs() as f64,
@@ -664,38 +670,54 @@ mod test {
     }
 
     #[test]
-    fn getting_correct_number_of_words_correct(){
+    fn getting_correct_number_of_words_correct() {
         let expected_text = "She Sells Sea Shells On the Sea Shore".to_string();
         let input_text = "She Sells Sea Shells On th".to_string();
 
-        let words_correct = TestResults::get_total_words_correct(&input_text, &expected_text, input_text.clone().chars().count());
+        let words_correct = TestResults::get_total_words_correct(
+            &input_text,
+            &expected_text,
+            input_text.clone().chars().count(),
+        );
         assert_eq!(words_correct, 5);
     }
 
     #[test]
-    fn getting_correct_number_of_words_correct2(){
+    fn getting_correct_number_of_words_correct2() {
         let expected_text = "She Sells Sea Shells On the Sea Shore".to_string();
         let input_text = "She SellsaSea Shells On th".to_string();
 
-        let words_correct = TestResults::get_total_words_correct(&input_text, &expected_text, input_text.clone().chars().count());
+        let words_correct = TestResults::get_total_words_correct(
+            &input_text,
+            &expected_text,
+            input_text.clone().chars().count(),
+        );
         assert_eq!(words_correct, 3);
     }
 
     #[test]
-    fn getting_correct_number_of_words_correct3(){
+    fn getting_correct_number_of_words_correct3() {
         let expected_text = "She Sells Sea Shells On the Sea Shore".to_string();
         let input_text = "She Sells Sea Shells On the".to_string();
 
-        let words_correct = TestResults::get_total_words_correct(&input_text, &expected_text, input_text.clone().chars().count());
+        let words_correct = TestResults::get_total_words_correct(
+            &input_text,
+            &expected_text,
+            input_text.clone().chars().count(),
+        );
         assert_eq!(words_correct, 6);
     }
 
     #[test]
-    fn getting_correct_number_of_words_correct4(){
+    fn getting_correct_number_of_words_correct4() {
         let expected_text = "She Sells Sea Shells On the Sea Shore".to_string();
         let input_text = "She Sells Sea Shells On the ".to_string();
 
-        let words_correct = TestResults::get_total_words_correct(&input_text, &expected_text, input_text.clone().chars().count());
+        let words_correct = TestResults::get_total_words_correct(
+            &input_text,
+            &expected_text,
+            input_text.clone().chars().count(),
+        );
         assert_eq!(words_correct, 6);
     }
 }

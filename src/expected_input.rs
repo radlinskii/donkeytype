@@ -121,7 +121,7 @@ fn create_uppercase_words(
 #[automock]
 pub trait ExpectedInputInterface {
     fn get_string(&self, len: usize) -> String;
-    fn get_string_till_space(&self, len:usize) -> String;
+    fn get_string_till_space(&self, len: usize) -> String;
 }
 
 impl ExpectedInputInterface for ExpectedInput {
@@ -142,20 +142,19 @@ impl ExpectedInputInterface for ExpectedInput {
     /// If string is shorter than the specified length it repeats it enough times for it to be long
     /// enough.
     fn get_string_till_space(&self, len: usize) -> String {
-        if len == 0{
+        if len == 0 {
             return "".to_string();
         }
-        
+
         let s = self.str.clone() + " ";
         let s = s.repeat((len / s.chars().count()) as usize + 1);
-        
-        let space_index = s[len-1..]
+
+        let space_index = s[len - 1..]
             .find(" ")
             .map(|i| i + len - 1)
             .unwrap_or_else(|| len - 1);
 
         return s[..=space_index].to_string();
-
     }
 }
 
@@ -253,20 +252,22 @@ mod tests {
         assert_eq!(expected_input.get_string(5), "Բարեւ");
     }
 
-
     #[test]
     fn testing_get_string_till_space() {
-        let expected_input = ExpectedInput{
-            str: "She Sells Sea Shells on the Sea Shore".to_string()
+        let expected_input = ExpectedInput {
+            str: "She Sells Sea Shells on the Sea Shore".to_string(),
         };
 
-        assert_eq!(expected_input.get_string_till_space(15), "She Sells Sea Shells ")
+        assert_eq!(
+            expected_input.get_string_till_space(15),
+            "She Sells Sea Shells "
+        )
     }
 
     #[test]
     fn testing_get_string_till_space2() {
-        let expected_input = ExpectedInput{
-            str: "She Sells Sea Shells on the Sea Shore".to_string()
+        let expected_input = ExpectedInput {
+            str: "She Sells Sea Shells on the Sea Shore".to_string(),
         };
 
         assert_eq!(expected_input.get_string_till_space(9), "She Sells ")
