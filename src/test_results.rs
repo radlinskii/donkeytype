@@ -277,6 +277,54 @@ impl TestResults {
             );
         }
     }
+
+    /// Compares Expected Input and Typed Input to find correct number of words typed
+    pub fn get_total_words_correct(typed_string: &String, expected_input: &String, typed_character_count: usize) -> u32{
+            
+        // This variable stores the indices of where spaces are present so as to slice words from input and expected input arrays
+        let spaces = expected_input
+        .chars()
+        .enumerate()
+        .filter(|(_, c)| *c == ' ')
+        .map(|(i, _)| i)
+        .collect::<Vec<_>>();
+        
+        if typed_character_count == 0{
+            return 0;
+        }
+
+        let mut correct_words:u32 = 0;
+        let mut word_start:usize = 0;
+        
+        for end_space in spaces.iter(){
+            if *end_space < typed_character_count{
+                if word_start == 0 || typed_string.chars().nth(word_start-1).unwrap() == ' '{
+                    if typed_string[word_start..*end_space] == expected_input[word_start..*end_space] && typed_string.chars().nth(*end_space).unwrap() == ' '{
+                        correct_words += 1;
+                    }
+                }
+
+
+                if *end_space + 1 < typed_character_count{
+                    word_start = *end_space + 1
+                }
+
+                else {
+                    break;
+                }
+            }
+
+            else {
+                if word_start == 0 || typed_string.chars().nth(word_start-1).unwrap() == ' '{
+                    if typed_string[word_start..] == expected_input[word_start..*end_space]{
+                        correct_words += 1;
+                    }
+                }
+                break;
+            }
+        }
+        return correct_words;
+    }
 }
 
 /// creates rendering loop and passes provided test results vector to render_chart function
