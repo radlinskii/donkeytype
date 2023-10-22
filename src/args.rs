@@ -19,6 +19,14 @@ pub struct Args {
     #[arg(long)]
     pub numbers_ratio: Option<f64>,
 
+    /// indicates if test should include symbols
+    #[arg(short, long)]
+    pub symbols: Option<bool>,
+
+    /// symbols-ratio argument
+    #[arg(long)]
+    pub symbols_ratio: Option<f64>,
+
     /// path to dictionary file
     #[arg(long)]
     pub dictionary_path: Option<String>,

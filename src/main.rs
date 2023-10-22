@@ -23,6 +23,8 @@
 //! | `duration`        | `30`                         | number       | duration of the test in seconds                                                         |
 //! | `numbers`         | `false`                      | boolean      | flag indicating if numbers should be inserted in expected input                         |
 //! | `numbers_ratio`   | `0.05` (if numbers=TRUE)     | number       | ratio for putting numbers in the test                                                   |
+//! | `symbols`         | `false`                      | boolean      | flag indicating if symbols should be inserted in expected input                         |
+//! | `symbols_ratio`   | `0.10` (if symbols=TRUE)     | number       | ratio for putting symbols in the test                                                   |
 //! | `uppercase`       | `false`                      | boolean      | flag indicating if uppercase letters should be inserted in expected input               |
 //! | `uppercase_ratio` | `0.15`                       | boolean      | ratio for putting uppercase letters in test                                             |
 //! | `dictionary_path` |  `None` (builtin dictionary) | string       | path to file with dictionary words to sample from while creating test's expected input  |
@@ -263,6 +265,8 @@ mod tests {
             uppercase: None,
             uppercase_ratio: None,
             numbers_ratio: None,
+            symbols: None,
+            symbols_ratio: None,
             save_results: None,
             history: None,
         };
@@ -297,6 +301,8 @@ mod tests {
             uppercase_ratio: None,
             numbers: None,
             numbers_ratio: None,
+            symbols: None,
+            symbols_ratio: None,
             save_results: None,
             history: None,
         };

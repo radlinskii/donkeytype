@@ -7,6 +7,8 @@
 //! | `duration`        | `30`                         | number       | duration of the test in seconds                                                         |
 //! | `numbers`         | `false`                      | boolean      | flag indicating if numbers should be inserted in expected input                         |
 //! | `numbers_ratio`   | `0.05` (if numbers=TRUE)     | number       | ratio for putting numbers in the test                                                   |
+//! | `symbols`         | `false`                      | boolean      | flag indicating if symbols should be inserted in expected input                         |
+//! | `symbols_ratio`   | `0.10` (if symbols=TRUE)     | number       | ratio for putting symbols in the test                                                   |
 //! | `uppercase`       | `false`                      | boolean      | flag indicating if uppercase letters should be inserted in expected input               |
 //! | `uppercase_ratio` | `0.15`                       | boolean      | ratio for putting uppercase letters in test                                             |
 //! | `dictionary_path` |  `None` (builtin dictionary) | string       | path to file with dictionary words to sample from while creating test's expected input  |
@@ -64,6 +66,8 @@ pub struct Config {
     pub duration: Duration,
     pub numbers: bool,
     pub numbers_ratio: f64,
+    pub symbols: bool,
+    pub symbols_ratio: f64,
     pub dictionary_path: Option<PathBuf>,
     pub uppercase: bool,
     pub uppercase_ratio: f64,
@@ -77,6 +81,8 @@ struct ConfigFile {
     pub duration: Option<u64>,
     pub numbers: Option<bool>,
     pub numbers_ratio: Option<f64>,
+    pub symbols: Option<bool>,
+    pub symbols_ratio: Option<f64>,
     pub dictionary_path: Option<String>,
     pub uppercase: Option<bool>,
     pub uppercase_ratio: Option<f64>,
@@ -101,6 +107,8 @@ impl Config {
             duration: Duration::from_secs(30),
             numbers: false,
             numbers_ratio: 0.05,
+            symbols: false,
+            symbols_ratio: 0.10,
             dictionary_path: None,
             uppercase: false,
             uppercase_ratio: 0.15,
@@ -155,6 +163,16 @@ fn augment_config_with_config_file(config: &mut Config, mut config_file: fs::Fil
         if let Some(numbers_ratio) = config_from_file.numbers_ratio {
             if numbers_ratio >= 0.0 && numbers_ratio <= 1.0 {
                 config.numbers_ratio = numbers_ratio
+            }
+        }
+
+        if let Some(symbols) = config_from_file.symbols {
+            config.symbols = symbols;
+        }
+
+        if let Some(symbols_ratio) = config_from_file.symbols_ratio {
+            if symbols_ratio >= 0.0 && symbols_ratio <= 1.0 {
+                config.symbols_ratio = symbols_ratio;
             }
         }
 
@@ -217,6 +235,14 @@ fn augment_config_with_args(config: &mut Config, args: Args) {
             config.numbers_ratio = numbers_ratio
         }
     }
+    if let Some(symbols) = args.symbols {
+        config.symbols = symbols;
+    }
+    if let Some(symbols_ratio) = args.symbols_ratio {
+        if symbols_ratio >= 0.0 && symbols_ratio <= 1.0 {
+            config.symbols_ratio = symbols_ratio
+        }
+    }
     if let Some(duration) = args.duration {
         config.duration = Duration::from_secs(duration);
     }
@@ -258,6 +284,8 @@ mod tests {
             numbers: None,
             numbers_ratio: None,
             dictionary_path: None,
+            symbols: None,
+            symbols_ratio: None,
             uppercase: None,
             uppercase_ratio: None,
             save_results: None,
@@ -281,6 +309,8 @@ mod tests {
             duration: None,
             numbers: None,
             numbers_ratio: None,
+            symbols: None,
+            symbols_ratio: None,
             dictionary_path: None,
             uppercase: None,
             uppercase_ratio: None,
@@ -301,6 +331,8 @@ mod tests {
             duration: Some(10),
             numbers: Some(true),
             numbers_ratio: None,
+            symbols: None,
+            symbols_ratio: None,
             dictionary_path: None,
             uppercase: None,
             uppercase_ratio: None,
@@ -326,6 +358,8 @@ mod tests {
             duration: Some(20),
             numbers: Some(false),
             numbers_ratio: None,
+            symbols: None,
+            symbols_ratio: None,
             dictionary_path: Some(String::from("/etc/dict/words")),
             uppercase: None,
             uppercase_ratio: None,
