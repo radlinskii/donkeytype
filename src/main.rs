@@ -130,11 +130,16 @@ fn handle_main_command(
     terminal: &mut Terminal<CrosstermBackend<io::Stdout>>,
     args: Args,
 ) -> Result<()> {
-    let config_file_path = dirs::home_dir()
-        .context("Unable to get home directory")?
-        .join(".config")
-        .join("donkeytype")
-        .join("donkeytype-config.json");
+    let config_file_path = if cfg!(target_os = "windows") {
+        dirs::config_local_dir().context("Unable to get local config directory")?
+    } else {
+        dirs::home_dir()
+            .context("Unable to get home directory")?
+            .join(".config")
+    }
+    .join("donkeytype")
+    .join("donkeytype-config.json");
+
     let config = Config::new(args, config_file_path).context("Unable to create config")?;
     let expected_input = ExpectedInput::new(&config).context("Unable to create expected input")?;
 
@@ -234,11 +239,15 @@ mod tests {
     }
 
     fn setup_terminal(args: Args) -> Result<(Config, ExpectedInput, Terminal<TestBackend>)> {
-        let config_file_path = dirs::home_dir()
-            .context("Unable to get home directory")?
-            .join(".config")
-            .join("donkeytype")
-            .join("donkeytype-config.json");
+        let config_file_path = if cfg!(target_os = "windows") {
+            dirs::config_local_dir().context("Unable to get local config directory")?
+        } else {
+            dirs::home_dir()
+                .context("Unable to get home directory")?
+                .join(".config")
+        }
+        .join("donkeytype")
+        .join("donkeytype-config.json");
 
         let config = Config::new(args, config_file_path).context("Unable to create config")?;
         let expected_input =
