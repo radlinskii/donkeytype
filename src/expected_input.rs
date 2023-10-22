@@ -48,41 +48,49 @@ impl ExpectedInput {
         let surrounding_symbols = ['[', ']', '{', '}', '(', ')', '"', '"', '\'', '\''];
 
         let mut rng = thread_rng();
-        let mut str = str.split("\n").map(|word| {
-            let mut word = word.to_string();
+        let mut str = str
+            .split("\n")
+            .map(|word| {
+                let mut word = word.to_string();
 
-            // uppercase
-            if config.uppercase && rng.gen::<f64>() < config.uppercase_ratio {
-                let mut c = word.chars();
-                word = match c.next() {
-                    None => String::new(),
-                    Some(f) => f.to_uppercase().collect::<String>() + c.as_str()
-                };
-            }
-
-            // numbers
-            if config.numbers && rng.gen::<f64>() < config.numbers_ratio {
-                word = (0..word.len())
-                    .map(|_| rng.gen_range(b'0'..=b'9') as char)
-                    .collect();
-            }
-
-            // symbols
-            if config.symbols && rng.gen::<f64>() < config.symbols_ratio {
-                word = match rng.gen::<usize>() % 2 {
-                    0 => {
-                        let index = rng.gen::<usize>() % ending_symbols.len();
-                        format!("{}{}", word, ending_symbols[index])
-                    }
-                    1 => {
-                        let index = (rng.gen::<usize>() % (surrounding_symbols.len()/2))* 2;
-                        format!("{}{}{}", surrounding_symbols[index], word, surrounding_symbols[index+1])
-                    }
-                    _ => word.to_string()
+                // uppercase
+                if config.uppercase && rng.gen::<f64>() < config.uppercase_ratio {
+                    let mut c = word.chars();
+                    word = match c.next() {
+                        None => String::new(),
+                        Some(f) => f.to_uppercase().collect::<String>() + c.as_str(),
+                    };
                 }
-            }
-            word
-        }).collect::<Vec<_>>();
+
+                // numbers
+                if config.numbers && rng.gen::<f64>() < config.numbers_ratio {
+                    word = (0..word.len())
+                        .map(|_| rng.gen_range(b'0'..=b'9') as char)
+                        .collect();
+                }
+
+                // symbols
+                if config.symbols && rng.gen::<f64>() < config.symbols_ratio {
+                    word = match rng.gen::<usize>() % 2 {
+                        0 => {
+                            let index = rng.gen::<usize>() % ending_symbols.len();
+                            format!("{}{}", word, ending_symbols[index])
+                        }
+                        1 => {
+                            let index = (rng.gen::<usize>() % (surrounding_symbols.len() / 2)) * 2;
+                            format!(
+                                "{}{}{}",
+                                surrounding_symbols[index],
+                                word,
+                                surrounding_symbols[index + 1]
+                            )
+                        }
+                        _ => word.to_string(),
+                    }
+                }
+                word
+            })
+            .collect::<Vec<_>>();
         str.shuffle(&mut rng);
         let str = str.join(" ").trim().to_string();
 
