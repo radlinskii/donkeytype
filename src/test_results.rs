@@ -5,7 +5,7 @@
 
 use anyhow::{Context, Result};
 use chrono::{DateTime, Datelike, Local, Timelike};
-use crossterm::event::{self, Event, KeyCode};
+use crossterm::event::{self, Event, KeyCode, KeyEventKind};
 use ratatui::{
     prelude::{Backend, Constraint, Direction, Layout, Rect},
     style::{Style, Stylize},
@@ -196,11 +196,13 @@ impl TestResults {
 
             if event::poll(Duration::from_millis(100)).context("Unable to poll for event")? {
                 if let Event::Key(key) = event::read().context("Unable to read event")? {
-                    match key.code {
-                        KeyCode::Esc => {
-                            break;
+                    if key.kind == KeyEventKind::Press {
+                        match key.code {
+                            KeyCode::Esc => {
+                                break;
+                            }
+                            _ => {}
                         }
-                        _ => {}
                     }
                 }
             }
@@ -313,11 +315,13 @@ pub fn render_results<B: Backend>(
 
         if event::poll(Duration::from_millis(100)).context("Unable to poll for event")? {
             if let Event::Key(key) = event::read().context("Unable to read event")? {
-                match key.code {
-                    KeyCode::Esc => {
-                        break;
+                if key.kind == KeyEventKind::Press {
+                    match key.code {
+                        KeyCode::Esc => {
+                            break;
+                        }
+                        _ => {}
                     }
-                    _ => {}
                 }
             }
         }
