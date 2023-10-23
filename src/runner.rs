@@ -12,7 +12,7 @@
 //! And test statistics are returned from the runner.
 
 use anyhow::{Context, Result};
-use crossterm::event::{self, Event, KeyCode, KeyModifiers, KeyEventKind};
+use crossterm::event::{self, Event, KeyCode, KeyEventKind, KeyModifiers};
 use mockall::automock;
 use std::time::{Duration, Instant};
 
