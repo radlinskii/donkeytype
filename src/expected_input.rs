@@ -48,7 +48,7 @@ impl ExpectedInput {
         let surrounding_symbols = ['[', ']', '{', '}', '(', ')', '"', '"', '\'', '\''];
 
         let mut rng = thread_rng();
-        let mut str = str
+        let mut str: Vec<String> = str
             .split("\n")
             .map(|word| {
                 let mut word = word.to_string();
@@ -120,8 +120,7 @@ impl ExpectedInputInterface for ExpectedInput {
 
 #[cfg(test)]
 mod tests {
-    use crate::color_scheme::ColorScheme;
-    use std::{io::Write, time::Duration};
+    use std::io::Write;
 
     use super::*;
 
@@ -140,17 +139,8 @@ mod tests {
             .write_all(r#"halo"#.as_bytes())
             .expect("Unable to write to temp file");
         let config = Config {
-            duration: Duration::from_secs(30),
-            numbers: false,
-            numbers_ratio: 0.05,
-            symbols: false,
-            symbols_ratio: 0.10,
             dictionary_path: Some(config_file.path().to_path_buf()),
-            uppercase: false,
-            uppercase_ratio: 0.45,
-            colors: ColorScheme::default(),
-            save_results: false,
-            results_path: None,
+            ..Config::default()
         };
 
         let expected_input = ExpectedInput::new(&config).expect("unable to create expected input");
