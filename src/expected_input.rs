@@ -25,9 +25,15 @@ pub struct ExpectedInput {
 impl ExpectedInput {
     /// Create new struct instance by reading the dictionary file
     ///
-    /// After reading the file shuffle its content
-    /// then replace some words with numbers if specified in config
-    /// then save one long string to memory
+    /// After reading the file iterate over the words and apply the
+    /// specified settings.
+    ///
+    /// Each setting is applied according to the specified ratio.
+    /// * `uppercase` will capitalize the word. ("hello" => "Hello")
+    /// * `numbers` will turn each letter of a word into a random number. (
+    /// "hello" => "52139")
+    /// * `symbols` will either append a symbol or surround the word with
+    /// matching symbols. ("hello" => "hello!", "hello" => "{hello}")
     pub fn new(config: &Config) -> Result<Self, anyhow::Error> {
         let mut str = dictionary::WORDS.to_string();
         if let Some(dictionary_path) = &config.dictionary_path {
@@ -38,83 +44,58 @@ impl ExpectedInput {
                 .context("Unable to read dictionary file")?;
         }
 
+        let ending_symbols = ['.', ',', '!', '?'];
+        let surrounding_symbols = ['[', ']', '{', '}', '(', ')', '"', '"', '\'', '\''];
+
         let mut rng = thread_rng();
-        let mut str_vec = str.split("\n").collect::<Vec<&str>>();
-        let mut string_vec: Vec<String> = str_vec.iter().map(|s| s.to_string()).collect();
-        str_vec.shuffle(&mut rng);
+        let mut str = str
+            .split("\n")
+            .map(|word| {
+                let mut word = word.to_string();
 
-        // creating a pointer which points to where the words starts in the vector to help with uppercase words since we replace
-        // words in the beginning with numbers when numbers are enabled.
-        let mut words_start_pos: usize = 0;
+                // uppercase
+                if config.uppercase && rng.gen::<f64>() < config.uppercase_ratio {
+                    let mut c = word.chars();
+                    word = match c.next() {
+                        None => String::new(),
+                        Some(f) => f.to_uppercase().collect::<String>() + c.as_str(),
+                    };
+                }
 
-        if config.numbers == true {
-            words_start_pos =
-                replace_words_with_numbers(&mut string_vec, &mut rng, config.numbers_ratio);
-            str_vec = string_vec.iter().map(|s| s.as_str()).collect();
-        }
+                // numbers
+                if config.numbers && rng.gen::<f64>() < config.numbers_ratio {
+                    word = (0..word.len())
+                        .map(|_| rng.gen_range(b'0'..=b'9') as char)
+                        .collect();
+                }
 
-        if config.uppercase == true {
-            create_uppercase_words(&mut string_vec, words_start_pos, config.uppercase_ratio)
-                .context("Unable to create uppercase words")?;
-            str_vec = string_vec.iter().map(|s| s.as_str()).collect();
-        }
-
-        str_vec.shuffle(&mut rng);
-
-        let str = str_vec.join(" ").trim().to_string();
+                // symbols
+                if config.symbols && rng.gen::<f64>() < config.symbols_ratio {
+                    word = match rng.gen::<usize>() % 2 {
+                        0 => {
+                            let index = rng.gen::<usize>() % ending_symbols.len();
+                            format!("{}{}", word, ending_symbols[index])
+                        }
+                        1 => {
+                            let index = (rng.gen::<usize>() % (surrounding_symbols.len() / 2)) * 2;
+                            format!(
+                                "{}{}{}",
+                                surrounding_symbols[index],
+                                word,
+                                surrounding_symbols[index + 1]
+                            )
+                        }
+                        _ => word.to_string(),
+                    }
+                }
+                word
+            })
+            .collect::<Vec<_>>();
+        str.shuffle(&mut rng);
+        let str = str.join(" ").trim().to_string();
 
         Ok(Self { str })
     }
-}
-
-/// In given vector of words replace some of them
-///
-/// with words consisting only of numbers
-/// number_ratio should be between [0, 1.0]
-/// and tells how many percent of words should become numbers
-fn replace_words_with_numbers(
-    string_vec: &mut Vec<String>,
-    rng: &mut rand::rngs::ThreadRng,
-    numbers_ratio: f64,
-) -> usize {
-    let change_to_num_threshold = (numbers_ratio * string_vec.len() as f64).round() as usize;
-
-    *string_vec = string_vec
-        .iter()
-        .enumerate()
-        .map(|(index, word)| {
-            if index < change_to_num_threshold {
-                let random_digits: String = (0..word.len())
-                    .map(|_| rng.gen_range(b'0'..=b'9') as char)
-                    .collect();
-                return random_digits;
-            }
-            return word.to_string();
-        })
-        .collect();
-
-    return change_to_num_threshold - 1;
-}
-
-fn create_uppercase_words(
-    string_vec: &mut Vec<String>,
-    pos: usize,
-    uppercase_ratio: f64,
-) -> Result<()> {
-    let num_uppercase_words = (uppercase_ratio * string_vec[pos..].len() as f64).round() as usize;
-    for i in pos..pos + num_uppercase_words {
-        if string_vec[i] != "" {
-            let mut v: Vec<char> = string_vec[i].chars().collect();
-            v[0] = v[0]
-                .to_uppercase()
-                .nth(0)
-                .context("Unable to get first character of a word")?;
-            let s: String = v.into_iter().collect();
-            string_vec[i] = s;
-        }
-    }
-
-    Ok(())
 }
 
 /// extracted to trait to create mock with `mockall` crate
@@ -162,6 +143,8 @@ mod tests {
             duration: Duration::from_secs(30),
             numbers: false,
             numbers_ratio: 0.05,
+            symbols: false,
+            symbols_ratio: 0.10,
             dictionary_path: Some(config_file.path().to_path_buf()),
             uppercase: false,
             uppercase_ratio: 0.45,
@@ -192,36 +175,6 @@ mod tests {
         assert_eq!(expected_input.get_string(11), "abc abc abc");
     }
 
-    #[test]
-    fn should_replace_words_with_numbers() {
-        let mut string_vec = vec![
-            "item1".to_string(),
-            "item2".to_string(),
-            "item3".to_string(),
-            "item4".to_string(),
-            "item5".to_string(),
-            "item6".to_string(),
-            "item7".to_string(),
-            "item8".to_string(),
-        ];
-        let mut rng = thread_rng();
-        let numbers_ratio = 0.5;
-
-        replace_words_with_numbers(&mut string_vec, &mut rng, numbers_ratio);
-
-        let items_with_only_digits: Vec<&String> = string_vec
-            .iter()
-            .filter(|item| item.chars().all(|c| c.is_digit(10)))
-            .collect();
-
-        let change_to_num_threshold = (numbers_ratio * string_vec.len() as f64).round() as usize;
-        assert_eq!(change_to_num_threshold, 4);
-        assert_eq!(
-            items_with_only_digits.len(),
-            4,
-            "At least 4 items contain only digits"
-        );
-    }
     #[test]
     fn should_work_with_non_ascii_chars() {
         let expected_input = ExpectedInput {
