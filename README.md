@@ -38,6 +38,8 @@ mv ~/Downloads/donkeytype ~/.local/bin/donkeytype
 donkeytype --version
 ```
 
+By default `donkeytype` saves results of tests to `~/.local/share/donkeytype/donkeytype-results.csv`  on **Linux** and **MacOS**, and `C:\Users\{Username}\AppData\Local\donkeytype\donkeytype-results.csv` on **Windows**.
+
 To view the history of results in a bar chart you can run:
 
 ```shell
@@ -67,7 +69,7 @@ Default config looks like this:
 | `uppercase`       | `false`                     | boolean      | flag indicating if uppercase letters should be inserted in expected input              |
 | `uppercase_ratio` | `0.15`                      | boolean      | ratio for putting uppercase letters in test                                            |
 | `dictionary_path` | `None` (builtin dictionary) | string       | path to file with dictionary words to sample from while creating test's expected input |
-| `save_results`    | `true`                      | boolean      | flag indicating if results should be saved to a file                                   |
+| `save_results`    | `true`                       | boolean      | flag indicating if results should be saved to a file  ( `~/.local/share/donkeytype/donkeytype-results.csv`  on Linux and MacOS, and `C:\Users\{Username}\AppData\Local\donkeytype\donkeytype-results.csv` on Windows) |
 | `dictionary_path` | `"src/dict/words.txt"`      | string       | dictionary words to sample from while creating test's expected input                   |
 
 > NOTE: If provided `numbers_ratio` is not between `0` to `1.0`, Default `numbers_ratio = 0.05` will be used.

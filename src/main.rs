@@ -28,7 +28,7 @@
 //! | `uppercase`       | `false`                      | boolean      | flag indicating if uppercase letters should be inserted in expected input               |
 //! | `uppercase_ratio` | `0.15`                       | boolean      | ratio for putting uppercase letters in test                                             |
 //! | `dictionary_path` |  `None` (builtin dictionary) | string       | path to file with dictionary words to sample from while creating test's expected input  |
-//! | `save_results`    | `true`                       | boolean      | flag indicating if results should be saved to a file                                    |
+//! | `save_results`    | `true`                       | boolean      | flag indicating if results should be saved to a file  ( `~/.local/share/donkeytype/donkeytype-results.csv`  on Linux and MacOS, and `C:\Users\{Username}\AppData\Local\donkeytype\donkeytype-results.csv` on Windows) |
 //!
 //! NOTE: If provided `numbers_ratio` is not between `0` to `1.0`, Default `numbers_ratio = 0.05` will be used.
 //! NOTE: If provided `uppercase_ratio` is not between `0` to `1.0`, Default `numbers_ratio = 0.15` will be used.
