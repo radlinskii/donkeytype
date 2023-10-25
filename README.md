@@ -145,6 +145,8 @@ If you found this repo because of [Hacktoberfest 2023](https://hacktoberfest.com
 
 If you want to remove `donkeytype` from your system you simply remove the executable binary from wherever you've downloaded it to.
 
+### MacOS & Linux
+
 Additionally to remove the history of results run:
 
 ```shell
@@ -156,6 +158,10 @@ and if you've created a configuration file remove it too:
 ```shell
 rm -rf ~/.config/donkeytype
 ```
+
+### Windows
+
+On Windows delete `C:\Users\{Username}\AppData\Local\donkeytype` folder to get rid of history results and configuration file.
 
 ## License
 
