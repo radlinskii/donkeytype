@@ -16,7 +16,6 @@ To pause the test, simply press `<Esc>`. To resume, press `'e'` again.
 
 Your WPM (words per minute) score is calculated based on the number of typed characters divided by 5 (word), and normalized to a 60-second timeframe (minute).
 
-
 > Note: So far it was only tested on `MacOS`.
 > Needs testing on `Linux`
 > No support for `Windows` yet (different file paths)
@@ -33,12 +32,13 @@ Then to run the main program with default configuration simply run the executabl
 ```
 
 You can move the binary to e.g. `~/.local/bin` folder (or any other folder added to your $PATH) to run it from anywhere:
+
 ```shell
 mv ~/Downloads/donkeytype ~/.local/bin/donkeytype
 donkeytype --version
 ```
 
-By default `donkeytype` saves results of tests to `~/.local/share/donkeytype/donkeytype-results.csv`  on **Linux** and **MacOS**, and `C:\Users\{Username}\AppData\Local\donkeytype\donkeytype-results.csv` on **Windows**.
+By default `donkeytype` saves results of tests to `~/.local/share/donkeytype/donkeytype-results.csv` on **Linux** and **MacOS**, and `C:\Users\{Username}\AppData\Local\donkeytype\donkeytype-results.csv` on **Windows**.
 
 To view the history of results in a bar chart you can run:
 
@@ -46,7 +46,7 @@ To view the history of results in a bar chart you can run:
 ./donkeytype history
 ```
 
-<img width="1426" alt="picture demonstraiting bar chart with history data" src="https://github.com/radlinskii/donkeytype/assets/26116041/352c68fc-28a3-4ea2-8800-d74b8d759ddd">
+<img width="1426" alt="picture demonstrating bar chart with history data" src="https://github.com/radlinskii/donkeytype/assets/26116041/352c68fc-28a3-4ea2-8800-d74b8d759ddd">
 
 To see all available options run:
 
@@ -61,19 +61,19 @@ Configuration will grow when more features are added (_different modes_, _differ
 
 Default config looks like this:
 
-| name              | default value               | type in JSON | description                                                                            |
-| ----------------- | --------------------------- | ------------ | -------------------------------------------------------------------------------------- |
-| `duration`        | `30`                        | number       | duration of the test in seconds                                                        |
-| `numbers`         | `false`                     | boolean      | flag indicating if numbers should be inserted in expected input                        |
-| `numbers_ratio`   | `0.05` (if numbers=TRUE)    | number       | ratio for putting numbers in the test                                                  |
-| `uppercase`       | `false`                     | boolean      | flag indicating if uppercase letters should be inserted in expected input              |
-| `uppercase_ratio` | `0.15`                      | boolean      | ratio for putting uppercase letters in test                                            |
-| `dictionary_path` | `None` (builtin dictionary) | string       | path to file with dictionary words to sample from while creating test's expected input |
-| `save_results`    | `true`                       | boolean      | flag indicating if results should be saved to a file  ( `~/.local/share/donkeytype/donkeytype-results.csv`  on Linux and MacOS, and `C:\Users\{Username}\AppData\Local\donkeytype\donkeytype-results.csv` on Windows) |
-| `dictionary_path` | `"src/dict/words.txt"`      | string       | dictionary words to sample from while creating test's expected input                   |
+| name              | default value               | type in JSON | description                                                                                                                                                                                                         |
+| ----------------- | --------------------------- | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `duration`        | `30`                        | number       | duration of the test in seconds                                                                                                                                                                                     |
+| `numbers`         | `false`                     | boolean      | flag indicating if numbers should be inserted in expected input                                                                                                                                                     |
+| `numbers_ratio`   | `0.05` (if numbers=true)    | number       | ratio for putting numbers in the test                                                                                                                                                                               |
+| `symbols`         | `false`                     | boolean      | flag indicating if symbols should be inserted in expected input                                                                                                                                                     |
+| `symbols_ratio`   | `0.10` (if symbols=true)    | number       | ratio for putting symbols in the test                                                                                                                                                                               |
+| `uppercase`       | `false`                     | boolean      | flag indicating if uppercase letters should be inserted in expected input                                                                                                                                           |
+| `uppercase_ratio` | `0.15` (if uppercase=true)  | boolean      | ratio for putting uppercase letters in test                                                                                                                                                                         |
+| `dictionary_path` | `None` (builtin dictionary) | string       | path to file with dictionary words to sample from while creating test's expected input                                                                                                                              |
+| `save_results`    | `true`                      | boolean      | flag indicating if results should be saved to a file ( `~/.local/share/donkeytype/donkeytype-results.csv` on Linux and MacOS, and `C:\Users\{Username}\AppData\Local\donkeytype\donkeytype-results.csv` on Windows) |
 
-> NOTE: If provided `numbers_ratio` is not between `0` to `1.0`, Default `numbers_ratio = 0.05` will be used.
-> Same happens with `uppercase_ratio`.
+NOTE: If provided `numbers_ratio` is not between `0` to `1.0`, default `numbers_ratio = 0.15` will be used. Same happens with `uppercase_ratio` and `symbols_ratio`.
 
 You can provide this config as options when running the program like so:
 
@@ -142,7 +142,7 @@ To submit a contribution, follow these general steps:
 
 If you found this repo because of [Hacktoberfest 2023](https://hacktoberfest.com/), make sure you familiarize yourself with [participation rules for contributors](https://hacktoberfest.com/participation/#contributors).
 
-## Uninstallation
+## Uninstalling
 
 If you want to remove `donkeytype` from your system you simply remove the executable binary from wherever you've downloaded it to.
 
