@@ -12,7 +12,7 @@
 //! And test statistics are returned from the runner.
 
 use anyhow::{Context, Result};
-use crossterm::event::{self, Event, KeyCode, KeyModifiers};
+use crossterm::event::{self, Event, KeyCode, KeyEventKind, KeyModifiers};
 use mockall::automock;
 use std::time::{Duration, Instant};
 
@@ -106,68 +106,70 @@ impl Runner {
 
             if event::poll(timeout).context("Unable to poll for event")? {
                 if let Event::Key(key) = event::read().context("Unable to read event")? {
-                    match self.input_mode {
-                        InputMode::Normal => match key.code {
-                            KeyCode::Char('e') => {
-                                start_time = if is_started {
-                                    start_time + pause_time.elapsed()
-                                } else {
-                                    Instant::now()
-                                };
-                                is_started = true;
-                                self.input_mode = InputMode::Editing;
-                            }
-                            KeyCode::Char('q') => {
-                                // todo return canceled test error and handle it in main
-                                return Ok(TestResults::new(
-                                    Stats::default(),
-                                    self.config.clone(),
-                                    false,
-                                ));
-                            }
-                            _ => {}
-                        },
-                        InputMode::Editing => match key.code {
-                            // Crossterm returns `ctrl+w` or ``ctrl+h` when `ctrl+backspace` is pressed
-                            // see: https://github.com/crossterm-rs/crossterm/issues/504
-                            KeyCode::Char('h') | KeyCode::Char('w')
-                                if key.modifiers.contains(KeyModifiers::CONTROL) =>
-                            {
-                                self.remove_last_word();
-                            }
-                            KeyCode::Char(c) => {
-                                self.input.push(c);
-
-                                let expected_input = self
-                                    .expected_input
-                                    .get_string(self.input.len())
-                                    .chars()
-                                    .collect::<Vec<char>>();
-
-                                let is_correct =
-                                    self.input.chars().last() == expected_input.last().copied();
-
-                                if !is_correct {
-                                    self.raw_mistakes_count += 1;
-                                } else {
-                                    self.raw_valid_characters_count += 1;
+                    if key.kind == KeyEventKind::Press {
+                        match self.input_mode {
+                            InputMode::Normal => match key.code {
+                                KeyCode::Char('e') => {
+                                    start_time = if is_started {
+                                        start_time + pause_time.elapsed()
+                                    } else {
+                                        Instant::now()
+                                    };
+                                    is_started = true;
+                                    self.input_mode = InputMode::Editing;
                                 }
-                            }
-                            KeyCode::Backspace
-                                if key.modifiers.contains(KeyModifiers::ALT)
-                                    | key.modifiers.contains(KeyModifiers::CONTROL) =>
-                            {
-                                self.remove_last_word();
-                            }
-                            KeyCode::Backspace => {
-                                self.input.pop();
-                            }
-                            KeyCode::Esc => {
-                                pause_time = Instant::now();
-                                self.input_mode = InputMode::Normal;
-                            }
-                            _ => {}
-                        },
+                                KeyCode::Char('q') => {
+                                    // todo return canceled test error and handle it in main
+                                    return Ok(TestResults::new(
+                                        Stats::default(),
+                                        self.config.clone(),
+                                        false,
+                                    ));
+                                }
+                                _ => {}
+                            },
+                            InputMode::Editing => match key.code {
+                                // Crossterm returns `ctrl+w` or ``ctrl+h` when `ctrl+backspace` is pressed
+                                // see: https://github.com/crossterm-rs/crossterm/issues/504
+                                KeyCode::Char('h') | KeyCode::Char('w')
+                                    if key.modifiers.contains(KeyModifiers::CONTROL) =>
+                                {
+                                    self.remove_last_word();
+                                }
+                                KeyCode::Char(c) => {
+                                    self.input.push(c);
+
+                                    let expected_input = self
+                                        .expected_input
+                                        .get_string(self.input.len())
+                                        .chars()
+                                        .collect::<Vec<char>>();
+
+                                    let is_correct =
+                                        self.input.chars().last() == expected_input.last().copied();
+
+                                    if !is_correct {
+                                        self.raw_mistakes_count += 1;
+                                    } else {
+                                        self.raw_valid_characters_count += 1;
+                                    }
+                                }
+                                KeyCode::Backspace
+                                    if key.modifiers.contains(KeyModifiers::ALT)
+                                        | key.modifiers.contains(KeyModifiers::CONTROL) =>
+                                {
+                                    self.remove_last_word();
+                                }
+                                KeyCode::Backspace => {
+                                    self.input.pop();
+                                }
+                                KeyCode::Esc => {
+                                    pause_time = Instant::now();
+                                    self.input_mode = InputMode::Normal;
+                                }
+                                _ => {}
+                            },
+                        }
                     }
                 }
             }
