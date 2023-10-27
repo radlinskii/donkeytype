@@ -43,6 +43,10 @@ pub struct Args {
     #[arg(long)]
     pub save_results: Option<bool>,
 
+    /// path to save the test results, enabled only when save_results is true
+    #[arg(long, requires = "save_results")]
+    pub results_path: Option<String>,
+
     /// Add subcommands here
     #[command(subcommand)]
     pub history: Option<SubCommand>,

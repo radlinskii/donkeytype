@@ -48,6 +48,7 @@ pub struct TestResults {
     pub dictionary_path: Option<String>,
     pub uppercase: Option<bool>,
     pub uppercase_ratio: Option<f64>,
+    pub results_path: Option<PathBuf>,
 
     // tells if test was successfully completed and results should be displayed and saved.
     #[serde(skip)]
@@ -120,13 +121,18 @@ impl TestResults {
 
             completed,
             save: config.save_results,
+            results_path: config.results_path,
         }
     }
 
     /// saves test statistics and configuration to a file in users home directory
     pub fn save_to_file(&self) -> Result<(), anyhow::Error> {
-        let results_file_path =
+        let default_results_path =
             get_results_file_path().context("Unable to ge results file path")?;
+        let results_file_path = match &self.results_path {
+            Some(results_path) => results_path,
+            None => &default_results_path,
+        };
 
         let results = read_previous_results().context("Unable to read previous results")?;
 

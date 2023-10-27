@@ -276,6 +276,7 @@ mod tests {
             symbols: None,
             symbols_ratio: None,
             save_results: None,
+            results_path: None,
             history: None,
         };
 
@@ -312,6 +313,7 @@ mod tests {
             symbols: None,
             symbols_ratio: None,
             save_results: None,
+            results_path: None,
             history: None,
         };
 
