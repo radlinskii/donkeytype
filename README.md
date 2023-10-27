@@ -112,6 +112,20 @@ You can also put all the options inside config file in `~/.config/donkeytype/don
 
 You need to have [rust toolchain](https://www.rust-lang.org/) installed locally to develop this program.
 
+### Getting started
+
+Use cargo to compile and run local repository with:
+
+```
+cargo run
+```
+
+To pass configuration options pass them via cargo to underlying program using `--`:
+
+```
+cargo run -- --duration 60
+```
+
 ### Guidelines
 
 Try cover your changes with unit tests whenever possible.
