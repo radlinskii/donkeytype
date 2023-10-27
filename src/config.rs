@@ -72,6 +72,7 @@ pub struct Config {
     pub uppercase_ratio: f64,
     pub colors: ColorScheme,
     pub save_results: bool,
+    pub results_path: Option<PathBuf>,
 }
 
 /// Used by `serde` crate to parse config file into a rust struct
@@ -87,6 +88,7 @@ struct ConfigFile {
     pub uppercase_ratio: Option<f64>,
     pub colors: Option<ConfigFileColorScheme>,
     pub save_results: Option<bool>,
+    pub results_path: Option<String>,
 }
 
 /// Struct used be `serde` crate to parse colors config from config file
@@ -113,6 +115,7 @@ impl Config {
             uppercase_ratio: 0.15,
             colors: ColorScheme::default(),
             save_results: true,
+            results_path: None,
         }
     }
 
@@ -210,6 +213,12 @@ fn augment_config_with_config_file(config: &mut Config, mut config_file: fs::Fil
         if let Some(save_results) = config_from_file.save_results {
             config.save_results = save_results;
         }
+
+        if let Some(true) = config_from_file.save_results {
+            if let Some(path) = config_from_file.results_path {
+                config.results_path = Some(PathBuf::from(path));
+            }
+        }
     }
 
     Ok(())
@@ -259,6 +268,12 @@ fn augment_config_with_args(config: &mut Config, args: Args) {
     if let Some(save_results_flag) = args.save_results {
         config.save_results = save_results_flag;
     }
+
+    if let Some(true) = args.save_results {
+        if let Some(path) = args.results_path {
+            config.results_path = Some(PathBuf::from(path));
+        }
+    }
 }
 
 #[cfg(test)]
@@ -288,6 +303,7 @@ mod tests {
             uppercase: None,
             uppercase_ratio: None,
             save_results: None,
+            results_path: None,
             history: None,
         };
         let config = Config::new(args, PathBuf::new()).expect("Unable to create config");
@@ -314,6 +330,7 @@ mod tests {
             uppercase: None,
             uppercase_ratio: None,
             save_results: None,
+            results_path: None,
             history: None,
         };
         let config =
@@ -336,6 +353,7 @@ mod tests {
             uppercase: None,
             uppercase_ratio: None,
             save_results: Some(false),
+            results_path: None,
             history: None,
         };
         let config = Config::new(args, PathBuf::new()).expect("Unable to create config");
@@ -363,6 +381,7 @@ mod tests {
             uppercase: None,
             uppercase_ratio: None,
             save_results: Some(true),
+            results_path: Some(String::from("/some-path")),
             history: None,
         };
         let config =
@@ -376,5 +395,6 @@ mod tests {
             Some(PathBuf::from("/etc/dict/words"))
         );
         assert_eq!(config.save_results, true);
+        assert_eq!(config.results_path, Some(PathBuf::from("/some-path")));
     }
 }
