@@ -467,13 +467,64 @@ impl<'a, 'b, B: Backend> FrameWrapperInterface for FrameWrapper<'a, 'b, B> {
 mod test {
     use mockall::predicate;
 
-    use crate::expected_input::MockExpectedInputInterface;
+    use crate::expected_input::{ExpectedInput, MockExpectedInputInterface};
+    use ratatui::{backend::TestBackend, buffer::Buffer};
+    use std::io::Write;
 
     use super::*;
+
+    fn get_config(dictionary: Vec<&str>) -> (Config, tempfile::NamedTempFile) {
+        let mut config_file = tempfile::NamedTempFile::new().expect("Unable to create temp file");
+        config_file
+            .write_all(dictionary.join(" ").as_bytes())
+            .expect("Unable to write to temp file");
+
+        (
+            Config {
+                dictionary_path: Some(config_file.path().to_path_buf()),
+                ..Config::default()
+            },
+            config_file, // It keeps tmp file while test is running
+        )
+    }
+
+    /// Tests the [`Runner`] widget against the expected [`Buffer`] by rendering it onto an equal
+    /// area and comparing the rendered and expected content.
+    fn test_runner(
+        runner: &mut Runner,
+        expected: Buffer,
+        callback: fn(frame: &mut FrameWrapper<'_, '_, TestBackend>, runner: &mut Runner) -> (),
+    ) {
+        let backend = TestBackend::new(expected.area.width, expected.area.height);
+        let mut terminal = Terminal::new(backend).unwrap();
+
+        terminal
+            .draw(|f| {
+                let mut frame_wrapper = FrameWrapper::new(f);
+                callback(&mut frame_wrapper, runner);
+            })
+            .unwrap();
+
+        terminal.backend().assert_buffer(&expected);
+    }
+
+    fn create_buffer(rect: Rect, lines: Vec<Vec<(&str, Color)>>) -> Buffer {
+        let mut buffer = Buffer::empty(rect);
+        for (y, line) in lines.iter().enumerate() {
+            let mut x: usize = 0;
+            for (sub_string, color) in line.iter() {
+                buffer.set_string(x as u16, y as u16, sub_string, Style::default().fg(*color));
+                x += sub_string.chars().count();
+            }
+        }
+
+        buffer
+    }
 
     #[test]
     fn should_render_single_line_input() {
         let config = Config::default();
+
         let mut expected_input = MockExpectedInputInterface::default();
 
         expected_input
@@ -511,105 +562,106 @@ mod test {
 
     #[test]
     fn should_render_multi_line_input() {
-        let config = Config::default();
-        let mut expected_input = MockExpectedInputInterface::default();
-
-        expected_input
-            .expect_get_string()
-            .with(predicate::eq(4 * 3))
-            .return_const("foobarbazqux".to_string());
+        let (config, _config_file) = get_config(vec!["foobarbazquxaboba"]);
+        let expected_input = ExpectedInput::new(&config).expect("unable to create expected input");
 
         let mut runner = Runner::new(config, expected_input);
-
         runner.input_mode = InputMode::Editing;
         runner.input = "foobar".to_string();
 
-        let mut frame = MockFrameWrapperInterface::default();
+        let buffer = create_buffer(
+            Rect {
+                x: 0,
+                y: 0,
+                width: 50,
+                height: 3,
+            },
+            vec![
+                vec![
+                    ("foobar", Color::Green),
+                    ("bazquxaboba foobarbazquxaboba foobarbazquxab", Color::Gray),
+                ],
+                vec![(
+                    "oba foobarbazquxaboba foobarbazquxaboba foobarbazq",
+                    Color::DarkGray,
+                )],
+                vec![
+                    ("30 seconds left", Color::Yellow),
+                    ("      ", Color::Reset),
+                    ("press 'Esc' to pause the test", Color::Yellow),
+                ],
+            ],
+        );
 
-        frame.expect_size().times(2).return_const(Rect {
-            x: 0,
-            y: 0,
-            width: 4,
-            height: 3,
+        test_runner(&mut runner, buffer, |frame, runner| {
+            runner.render(frame, 0);
         });
-
-        frame
-            .expect_render_widget::<Paragraph>()
-            .times(10)
-            .return_const(());
-
-        frame
-            .expect_set_cursor()
-            .with(predicate::eq(2), predicate::eq(1))
-            .times(1)
-            .return_const(());
-
-        runner.render(&mut frame, 0);
     }
 
     #[test]
     fn should_print_input() {
-        let config = Config::default();
-        let expected_input = MockExpectedInputInterface::default();
+        let (config, _config_file) = get_config(vec!["foo"]);
+        let expected_input = ExpectedInput::new(&config).expect("unable to create expected input");
         let mut runner = Runner::new(config, expected_input);
 
         runner.input = "foo".to_string();
 
-        let mut frame = MockFrameWrapperInterface::default();
-
-        frame
-            .expect_render_widget::<Paragraph>()
-            .times(3)
-            .return_const(());
-
-        runner.print_input(
-            &mut frame,
-            "foo",
+        let buffer = create_buffer(
             Rect {
                 x: 0,
                 y: 0,
                 width: 50,
                 height: 1,
             },
-            50,
+            vec![vec![("foo", Color::Green)]],
         );
+
+        test_runner(&mut runner, buffer, |frame, runner| {
+            runner.print_input(
+                frame,
+                "foo",
+                Rect {
+                    x: 0,
+                    y: 0,
+                    width: 50,
+                    height: 1,
+                },
+                50,
+            );
+        });
     }
 
     #[test]
     fn should_print_block_of_text() {
-        let config = Config::default();
-        let expected_input = MockExpectedInputInterface::default();
-        let runner = Runner::new(config, expected_input);
+        let (config, _config_file) = get_config(vec!["foo"]);
+        let expected_input = ExpectedInput::new(&config).expect("unable to create expected input");
+        let mut runner = Runner::new(config, expected_input);
 
-        let mut frame = MockFrameWrapperInterface::default();
-
-        frame
-            .expect_render_widget::<Paragraph>()
-            .withf(|_widget: &Paragraph<'_>, area| {
-                *area
-                    == Rect {
-                        x: 0,
-                        y: 0,
-                        width: 50,
-                        height: 1,
-                    }
-            })
-            .times(1)
-            .return_const(());
-
-        runner.print_block_of_text(
-            &mut frame,
-            "foo".to_string(),
+        let buffer = create_buffer(
             Rect {
                 x: 0,
                 y: 0,
                 width: 50,
                 height: 1,
             },
-            Color::Gray,
-            false,
-            false,
+            vec![vec![("foo", Color::Gray)]],
         );
+
+        test_runner(&mut runner, buffer, |frame, runner| {
+            runner.print_block_of_text(
+                frame,
+                "foo".to_string(),
+                Rect {
+                    x: 0,
+                    y: 0,
+                    width: 50,
+                    height: 1,
+                },
+                Color::Gray,
+                false,
+                false,
+            );
+        });
     }
 
     #[test]
