@@ -39,6 +39,10 @@ pub struct Args {
     #[arg(long)]
     pub uppercase_ratio: Option<f64>,
 
+    // path to config file in json format
+    #[arg(long)]
+    pub config_path: Option<String>,
+
     /// indicates if test results should be saved
     #[arg(long)]
     pub save_results: Option<bool>,
