@@ -86,6 +86,7 @@ use crossterm::{
 };
 use ratatui::{backend::CrosstermBackend, Terminal};
 use std::io;
+use std::path::PathBuf;
 use test_results::{read_previous_results, render_results};
 
 use args::Args;
@@ -131,15 +132,20 @@ fn handle_main_command(
     terminal: &mut Terminal<CrosstermBackend<io::Stdout>>,
     args: Args,
 ) -> Result<()> {
-    let config_file_path = if cfg!(target_os = "windows") {
-        dirs::config_local_dir().context("Unable to get local config directory")?
-    } else {
-        dirs::home_dir()
-            .context("Unable to get home directory")?
-            .join(".config")
-    }
-    .join("donkeytype")
-    .join("donkeytype-config.json");
+    let config_file_path = args
+        .config_path
+        .clone()
+        .map(PathBuf::from)
+        .unwrap_or_else(|| {
+            let base_dir = if cfg!(target_os = "windows") {
+                dirs::config_local_dir().expect("Unable to get local config directory")
+            } else {
+                dirs::home_dir()
+                    .expect("Unable to get home directory")
+                    .join(".config")
+            };
+            base_dir.join("donkeytype").join("donkeytype-config.json")
+        });
 
     let config = Config::new(args, config_file_path).context("Unable to create config")?;
     let expected_input = ExpectedInput::new(&config).context("Unable to create expected input")?;
@@ -205,7 +211,7 @@ fn restore_terminal(
 
 #[cfg(test)]
 mod tests {
-    use std::{io::Write, time::Instant};
+    use std::{io::Write, path::PathBuf, time::Instant};
 
     use anyhow::{Context, Result};
     use predicates::Predicate;
@@ -240,15 +246,20 @@ mod tests {
     }
 
     fn setup_terminal(args: Args) -> Result<(Config, ExpectedInput, Terminal<TestBackend>)> {
-        let config_file_path = if cfg!(target_os = "windows") {
-            dirs::config_local_dir().context("Unable to get local config directory")?
-        } else {
-            dirs::home_dir()
-                .context("Unable to get home directory")?
-                .join(".config")
-        }
-        .join("donkeytype")
-        .join("donkeytype-config.json");
+        let config_file_path = args
+            .config_path
+            .clone()
+            .map(PathBuf::from)
+            .unwrap_or_else(|| {
+                let base_dir = if cfg!(target_os = "windows") {
+                    dirs::config_local_dir().expect("Unable to get local config directory")
+                } else {
+                    dirs::home_dir()
+                        .expect("Unable to get home directory")
+                        .join(".config")
+                };
+                base_dir.join("donkeytype").join("donkeytype-config.json")
+            });
 
         let config = Config::new(args, config_file_path).context("Unable to create config")?;
         let expected_input =
@@ -275,6 +286,7 @@ mod tests {
             numbers_ratio: None,
             symbols: None,
             symbols_ratio: None,
+            config_path: None,
             save_results: None,
             results_path: None,
             history: None,
@@ -312,6 +324,7 @@ mod tests {
             numbers_ratio: None,
             symbols: None,
             symbols_ratio: None,
+            config_path: None,
             save_results: None,
             results_path: None,
             history: None,
