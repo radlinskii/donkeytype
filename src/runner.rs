@@ -183,15 +183,15 @@ impl Runner {
     /// Render a frame with each visual elements of the program in terminal.
     ///
     /// There are two areas being rendered,
-    /// input area - where user input and expected input is displayed,
-    /// and info area - where help message and time remaining is rendered.
+    /// info area - where help message and time remaining is rendered.
+    /// and input area - where user input and expected input are displayed,
     pub fn render(&mut self, frame: &mut impl FrameWrapperInterface, time_elapsed: u64) {
         let areas = Layout::default()
             .direction(Direction::Vertical)
-            .constraints([Constraint::Min(1), Constraint::Length(1)].as_ref())
+            .constraints([Constraint::Length(1), Constraint::Min(1)].as_ref())
             .split(frame.size());
-        let input_area = areas[0];
-        let info_area = areas[1];
+        let info_area = areas[0];
+        let input_area = areas[1];
 
         let frame_width: usize = frame.size().width as usize;
         let input_chars_count: usize = self.input.chars().count();
