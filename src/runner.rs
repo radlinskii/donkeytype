@@ -578,6 +578,11 @@ mod test {
             },
             vec![
                 vec![
+                    ("30 seconds left", Color::Yellow),
+                    ("      ", Color::Reset),
+                    ("press 'Esc' to pause the test", Color::Yellow),
+                ],
+                vec![
                     ("foobar", Color::Green),
                     ("bazquxaboba foobarbazquxaboba foobarbazquxab", Color::Gray),
                 ],
@@ -585,11 +590,6 @@ mod test {
                     "oba foobarbazquxaboba foobarbazquxaboba foobarbazq",
                     Color::DarkGray,
                 )],
-                vec![
-                    ("30 seconds left", Color::Yellow),
-                    ("      ", Color::Reset),
-                    ("press 'Esc' to pause the test", Color::Yellow),
-                ],
             ],
         );
 
