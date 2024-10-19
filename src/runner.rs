@@ -45,6 +45,7 @@ pub struct Runner {
     expected_input: Box<dyn ExpectedInputInterface>,
     raw_mistakes_count: u64,
     raw_valid_characters_count: u64,
+    is_started: bool,
 }
 
 impl Runner {
@@ -57,6 +58,7 @@ impl Runner {
             expected_input: Box::new(expected_input),
             raw_mistakes_count: 0,
             raw_valid_characters_count: 0,
+            is_started: false,
         }
     }
 
@@ -78,13 +80,12 @@ impl Runner {
     pub fn run<B: Backend>(&mut self, terminal: &mut Terminal<B>) -> Result<TestResults> {
         let mut start_time = Instant::now();
         let mut pause_time = Instant::now();
-        let mut is_started = false;
         let tick_rate = Duration::from_secs(1);
         let mut last_tick = Instant::now();
 
         loop {
             if let InputMode::Editing = self.input_mode {
-                if is_started && start_time.elapsed() >= self.config.duration {
+                if self.is_started && start_time.elapsed() >= self.config.duration {
                     return Ok(TestResults::new(
                         self.get_stats(),
                         self.config.clone(),
@@ -93,10 +94,31 @@ impl Runner {
                 }
             }
 
+            let time_left = match self.input_mode {
+                InputMode::Normal => match self.is_started {
+                    false => self.config.duration,
+                    true => self
+                        .config
+                        .duration
+                        .checked_sub(
+                            start_time
+                                .elapsed()
+                                .checked_sub(pause_time.elapsed())
+                                .unwrap_or(Duration::from_secs(0)),
+                        )
+                        .unwrap_or(Duration::from_secs(0)),
+                },
+                InputMode::Editing => self
+                    .config
+                    .duration
+                    .checked_sub(start_time.elapsed())
+                    .unwrap_or(Duration::from_secs(0)),
+            };
+
             terminal
                 .draw(|f: &mut Frame<B>| {
                     let mut frame_wrapper = FrameWrapper::new(f);
-                    self.render(&mut frame_wrapper, start_time.elapsed().as_secs());
+                    self.render(&mut frame_wrapper, time_left.as_secs());
                 })
                 .context("Unable to draw in terminal")?;
 
@@ -110,12 +132,12 @@ impl Runner {
                         match self.input_mode {
                             InputMode::Normal => match key.code {
                                 KeyCode::Char('s') => {
-                                    start_time = if is_started {
+                                    start_time = if self.is_started {
                                         start_time + pause_time.elapsed()
                                     } else {
                                         Instant::now()
                                     };
-                                    is_started = true;
+                                    self.is_started = true;
                                     self.input_mode = InputMode::Editing;
                                 }
                                 KeyCode::Char('q') => {
@@ -185,7 +207,7 @@ impl Runner {
     /// There are two areas being rendered,
     /// info area - where help message and time remaining is rendered.
     /// and input area - where user input and expected input are displayed,
-    pub fn render(&mut self, frame: &mut impl FrameWrapperInterface, time_elapsed: u64) {
+    pub fn render(&mut self, frame: &mut impl FrameWrapperInterface, time_left: u64) {
         let areas = Layout::default()
             .direction(Direction::Vertical)
             .constraints([Constraint::Length(1), Constraint::Min(1)].as_ref())
@@ -251,19 +273,12 @@ impl Runner {
             current_line_index,
         );
 
-        let time_left = self
-            .config
-            .duration
-            .checked_sub(Duration::from_secs(time_elapsed))
-            .unwrap_or(Duration::from_secs(0));
-        let label = match time_left.as_secs() {
+        let label = match time_left {
             1 => "second",
             _ => "seconds",
         };
-        let time_left_message = match self.input_mode {
-            InputMode::Normal => String::new(),
-            InputMode::Editing => format!("{} {label} left", time_left.as_secs()),
-        };
+        let time_left_message = format!("{} {label} left", time_left);
+
         self.print_block_of_text(
             frame,
             time_left_message,
@@ -274,7 +289,10 @@ impl Runner {
         );
 
         let help_message = match self.input_mode {
-            InputMode::Normal => "press 's' to start the test, press 'q' to quit",
+            InputMode::Normal => match self.is_started {
+                false => "press 's' to start the test, press 'q' to quit",
+                true => "press 's' to unpause the test, press 'q' to quit",
+            },
             InputMode::Editing => "press 'Esc' to pause the test",
         };
         self.print_block_of_text(
@@ -524,6 +542,7 @@ mod test {
     #[test]
     fn should_render_single_line_input() {
         let config = Config::default();
+        let time_left = config.duration;
 
         let mut expected_input = MockExpectedInputInterface::default();
 
@@ -557,12 +576,13 @@ mod test {
             .times(1)
             .return_const(());
 
-        runner.render(&mut frame, 0);
+        runner.render(&mut frame, time_left.as_secs());
     }
 
     #[test]
     fn should_render_multi_line_input() {
-        let (config, _config_file) = get_config(vec!["foobarbazquxaboba"]);
+        let (mut config, _config_file) = get_config(vec!["foobarbazquxaboba"]);
+        config.duration = Duration::from_secs(30);
         let expected_input = ExpectedInput::new(&config).expect("unable to create expected input");
 
         let mut runner = Runner::new(config, expected_input);
@@ -594,7 +614,7 @@ mod test {
         );
 
         test_runner(&mut runner, buffer, |frame, runner| {
-            runner.render(frame, 0);
+            runner.render(frame, 30);
         });
     }
 

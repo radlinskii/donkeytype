@@ -294,13 +294,13 @@ mod tests {
 
         let (config, expected_input, mut terminal) = setup_terminal(args)?;
 
+        let time_left = config.duration;
         let mut app = Runner::new(config, expected_input);
-        let start_time = Instant::now();
 
         terminal
             .draw(|f: &mut Frame<TestBackend>| {
                 let mut frame_wrapper = FrameWrapper::new(f);
-                app.render(&mut frame_wrapper, start_time.elapsed().as_secs());
+                app.render(&mut frame_wrapper, time_left.as_secs());
             })
             .context("Unable to draw in terminal")?;
 
