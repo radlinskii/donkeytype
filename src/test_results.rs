@@ -189,7 +189,7 @@ impl TestResults {
 
                 frame.render_widget(Paragraph::new("Test completed"), areas[0]);
                 frame.render_widget(
-                    Paragraph::new("Press <Esc> to quit")
+                    Paragraph::new("Press 'q' to quit")
                         .alignment(ratatui::prelude::Alignment::Right)
                         .green(),
                     areas[0],
@@ -204,7 +204,7 @@ impl TestResults {
                 if let Event::Key(key) = event::read().context("Unable to read event")? {
                     if key.kind == KeyEventKind::Press {
                         match key.code {
-                            KeyCode::Esc => {
+                            KeyCode::Char('q') => {
                                 break;
                             }
                             _ => {}
@@ -309,7 +309,7 @@ pub fn render_results<B: Backend>(
                 .split(frame.size());
 
             frame.render_widget(
-                Paragraph::new("Press <Esc> to quit")
+                Paragraph::new("Press 'q' to quit")
                     .alignment(ratatui::prelude::Alignment::Right)
                     .green(),
                 areas[0],
@@ -323,7 +323,7 @@ pub fn render_results<B: Backend>(
             if let Event::Key(key) = event::read().context("Unable to read event")? {
                 if key.kind == KeyEventKind::Press {
                     match key.code {
-                        KeyCode::Esc => {
+                        KeyCode::Char('q') => {
                             break;
                         }
                         _ => {}
