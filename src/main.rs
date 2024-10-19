@@ -344,7 +344,7 @@ mod tests {
 
         let text = extract_text_from_buffer(terminal.backend().buffer());
 
-        let predicate = predicates::str::contains("press 'e' to start the test, press 'q' to quit");
+        let predicate = predicates::str::contains("press 's' to start the test, press 'q' to quit");
 
         assert_eq!(true, predicate.eval(&text));
 

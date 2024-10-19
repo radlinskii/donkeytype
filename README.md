@@ -8,11 +8,11 @@ a _very_ minimalistic _cli_ typing test.
 
 When you run the program, you'll find the expected input displayed at the top of your terminal window. This text serves as a placeholder and represents what you should type when the test begins. Your goal is to type this text as quickly as possible. If you make a mistake, you can press the `backspace` key to delete a single character or hold down `Option`/`Ctrl` and press `backspace` to delete an entire word.
 
-In the top-right corner of the screen, a helpful message prompts you to start the test by pressing `'e'` (to enter the test) or exit by pressing `'q'`.
+In the top-right corner of the screen, a helpful message prompts you to start the test by pressing `'s'` (to enter the test) or exit by pressing `'q'`.
 
 While the test is running, you'll be able to monitor the time remaining in the top-left corner of the screen.
 
-To pause the test, simply press `<Esc>`. To resume, press `'e'` again.
+To pause the test, simply press `<Esc>`. To resume, press `'s'` again.
 
 Your WPM (words per minute) score is calculated based on the number of typed characters divided by 5 (word), and normalized to a 60-second timeframe (minute).
 

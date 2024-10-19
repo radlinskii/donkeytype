@@ -109,7 +109,7 @@ impl Runner {
                     if key.kind == KeyEventKind::Press {
                         match self.input_mode {
                             InputMode::Normal => match key.code {
-                                KeyCode::Char('e') => {
+                                KeyCode::Char('s') => {
                                     start_time = if is_started {
                                         start_time + pause_time.elapsed()
                                     } else {
@@ -274,7 +274,7 @@ impl Runner {
         );
 
         let help_message = match self.input_mode {
-            InputMode::Normal => "press 'e' to start the test, press 'q' to quit",
+            InputMode::Normal => "press 's' to start the test, press 'q' to quit",
             InputMode::Editing => "press 'Esc' to pause the test",
         };
         self.print_block_of_text(
