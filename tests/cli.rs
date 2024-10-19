@@ -27,6 +27,6 @@ fn should_print_help_message_for_normal_mode() {
     let mut cmd = Command::cargo_bin("donkeytype").expect("Unable to get cargo bin");
 
     cmd.assert().success().stdout(predicates::str::contains(
-        "press 'e' to start editing, press 'q' to quit",
+        "press 's' to start editing, press 'q' to quit",
     ));
 }
