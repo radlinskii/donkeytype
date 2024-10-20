@@ -2,7 +2,7 @@
 
 a _very_ minimalistic typing test TUI app.
 
-![gif demonstrating how the program works](https://github.com/Arthy22/donkeytype/releases/download/v0.13.0/Pi7_Gif.gif)
+![gif demonstrating how the program works](https://github.com/user-attachments/assets/8142340c-44db-4b79-926b-53332169daaf)
 
 ## How it Works
 
@@ -44,7 +44,7 @@ To view the history of results in a bar chart you can run:
 ./donkeytype history
 ```
 
-<img width="1426" alt="picture demonstrating bar chart with history data" src="https://github.com/radlinskii/donkeytype/assets/26116041/352c68fc-28a3-4ea2-8800-d74b8d759ddd">
+<img width="1426" alt="picture demonstrating bar chart with history data" src="https://github.com/user-attachments/assets/c96c4311-8ab7-4874-bf98-35648c541a0c">
 
 To see all available options run:
 
