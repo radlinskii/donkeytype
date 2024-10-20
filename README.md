@@ -14,6 +14,8 @@ While the test is running, you'll be able to monitor the time remaining in the t
 
 To pause the test, simply press `<Esc>`. To resume, press `'s'` again.
 
+At any time, you can press `'?'` to open a help window with instructions and configuration information.
+
 Your WPM (words per minute) score is calculated based on the number of typed characters divided by 5 (word), and normalized to a 60-second timeframe (minute).
 
 > It has been successfully tested on `MacOS`, `Linux` and `Windows`

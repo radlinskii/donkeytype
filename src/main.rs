@@ -75,6 +75,7 @@ mod expected_input;
 mod helpers;
 mod runner;
 mod test_results;
+mod help_window;
 
 use anyhow::{Context, Result};
 use clap::Parser;

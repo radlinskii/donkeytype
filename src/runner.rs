@@ -27,6 +27,7 @@ use ratatui::{
 
 use crate::config::Config;
 use crate::expected_input::ExpectedInputInterface;
+use crate::help_window::HelpWindow;
 use crate::helpers::split_by_char_index;
 use crate::test_results::{Stats, TestResults};
 
@@ -46,6 +47,8 @@ pub struct Runner {
     raw_mistakes_count: u64,
     raw_valid_characters_count: u64,
     is_started: bool,
+    show_help: bool,
+    help_window: HelpWindow,
 }
 
 impl Runner {
@@ -59,6 +62,8 @@ impl Runner {
             raw_mistakes_count: 0,
             raw_valid_characters_count: 0,
             is_started: false,
+            show_help: false,
+            help_window: HelpWindow::new(),
         }
     }
 
@@ -148,6 +153,9 @@ impl Runner {
                                         false,
                                     ));
                                 }
+                                KeyCode::Char('?) => {
+                                    self.show_help = !self.show_help;
+                                }
                                 _ => {}
                             },
                             InputMode::Editing => match key.code {
@@ -189,6 +197,9 @@ impl Runner {
                                     pause_time = Instant::now();
                                     self.input_mode = InputMode::Normal;
                                 }
+                                KeyCode::Char('?') => {
+                                    self.show_help = !self.show_help;
+                                }
                                 _ => {}
                             },
                         }
@@ -219,6 +230,11 @@ impl Runner {
         let input_chars_count: usize = self.input.chars().count();
         let current_line_index = (input_chars_count / frame_width) as u16;
         let input_current_line_len = input_chars_count % frame_width;
+
+        if self.show_help {
+            let help_area = centered_rect(60, 60, frame.size());
+            self.help_window.render(frame.frame(), help_area);
+        }
 
         let expected_input_str = self
             .expected_input
@@ -290,10 +306,10 @@ impl Runner {
 
         let help_message = match self.input_mode {
             InputMode::Normal => match self.is_started {
-                false => "press 's' to start the test, press 'q' to quit",
-                true => "press 's' to unpause the test, press 'q' to quit",
+                false => "press 's' to start the test, press 'q' to quit, press '?' for help",
+                true => "press 's' to unpause the test, press 'q' to quit, press '?' for help",
             },
-            InputMode::Editing => "press 'Esc' to pause the test",
+            InputMode::Editing => "press 'Esc' to pause the test, press '?' for help",
         };
         self.print_block_of_text(
             frame,
@@ -734,4 +750,24 @@ mod test {
 
         runner.move_cursor(&mut frame, area, input_current_line_len, current_line_index)
     }
+}
+
+fn centered_rect(percent_x: u16, percent_y: u16, r: Rect) -> Rect {
+    let popup_layout = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints([
+            Constraint::Percentage((100 - percent_y) / 2),
+            Constraint::Percentage(percent_y),
+            Constraint::Percentage((100 - percent_y) / 2),
+        ])
+        .split(r);
+
+    Layout::default()
+        .direction(Direction::Horizontal)
+        .constraints([
+            Constraint::Percentage((100 - percent_x) / 2),
+            Constraint::Percentage(percent_x),
+            Constraint::Percentage((100 - percent_x) / 2),
+        ])
+        .split(popup_layout[1])[1]
 }
