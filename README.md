@@ -2,7 +2,7 @@
 
 a _very_ minimalistic typing test TUI app.
 
-![gif demonstrating how the program works](https://github.com/Arthy22/donkeytype/releases/download/v0.13.1/Untitled.video.-.Made.with.Clipchamp.1.mp4)
+![gif demonstrating how the program works](https://github.com/Arthy22/donkeytype/releases/download/v0.13.0/Pi7_Gif.gif)
 
 ## How it Works
 
