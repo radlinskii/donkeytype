@@ -1,8 +1,9 @@
 use ratatui::{
+    backend::Backend,
     layout::{Constraint, Direction, Layout, Rect},
     style::{Color, Style},
-    widgets::{Block, Borders, Paragraph, Clear},
-    Frame, backend::Backend,
+    widgets::{Block, Borders, Clear, Paragraph},
+    Frame,
 };
 
 pub struct HelpWindow;
@@ -48,8 +49,7 @@ impl HelpWindow {
         ];
 
         for (i, &text) in help_text.iter().enumerate() {
-            let paragraph = Paragraph::new(text)
-                .style(Style::default().fg(Color::White));
+            let paragraph = Paragraph::new(text).style(Style::default().fg(Color::White));
             f.render_widget(paragraph, chunks[i]);
         }
 

@@ -308,7 +308,7 @@ impl Runner {
                 } else {
                     "press 's' to start the test, 'q' to quit, '?' for help"
                 }
-            },
+            }
             InputMode::Editing => "press 'Esc' to pause the test",
         };
         self.print_block_of_text(
