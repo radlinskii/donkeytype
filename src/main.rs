@@ -72,6 +72,7 @@ mod color_scheme;
 mod config;
 mod dictionary;
 mod expected_input;
+mod help_window;
 mod helpers;
 mod runner;
 mod test_results;
