@@ -153,7 +153,7 @@ impl Runner {
                                         false,
                                     ));
                                 }
-                                KeyCode::Char('?) => {
+                                KeyCode::Char('?') => {
                                     self.show_help = !self.show_help;
                                 }
                                 _ => {}
@@ -196,9 +196,6 @@ impl Runner {
                                 KeyCode::Esc => {
                                     pause_time = Instant::now();
                                     self.input_mode = InputMode::Normal;
-                                }
-                                KeyCode::Char('?') => {
-                                    self.show_help = !self.show_help;
                                 }
                                 _ => {}
                             },
@@ -305,11 +302,14 @@ impl Runner {
         );
 
         let help_message = match self.input_mode {
-            InputMode::Normal => match self.is_started {
-                false => "press 's' to start the test, press 'q' to quit, press '?' for help",
-                true => "press 's' to unpause the test, press 'q' to quit, press '?' for help",
+            InputMode::Normal => {
+                if self.is_started {
+                    "press 's' to unpause the test, 'q' to quit, '?' for help"
+                } else {
+                    "press 's' to start the test, 'q' to quit, '?' for help"
+                }
             },
-            InputMode::Editing => "press 'Esc' to pause the test, press '?' for help",
+            InputMode::Editing => "press 'Esc' to pause the test",
         };
         self.print_block_of_text(
             frame,
