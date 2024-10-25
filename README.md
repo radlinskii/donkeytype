@@ -2,7 +2,7 @@
 
 a _very_ minimalistic typing test TUI app.
 
-![gif demonstrating how the program works](https://github.com/user-attachments/assets/8142340c-44db-4b79-926b-53332169daaf)
+![gif demonstrating how the program works](https://github.com/radlinskii/donkeytype/assets/26116041/4c2a1b6d-e70e-4631-8438-9259cc780a36)
 
 ## How it Works
 
