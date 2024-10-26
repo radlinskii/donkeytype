@@ -8,7 +8,7 @@ a _very_ minimalistic typing test TUI app.
 
 When you run the program, you'll find the expected input displayed at the top of your terminal window. This text serves as a placeholder and represents what you should type when the test begins. Your goal is to type this text as quickly as possible. If you make a mistake, you can press the `backspace` key to delete a single character or hold down `Option`/`Ctrl` and press `backspace` to delete an entire word.
 
-In the top-right corner of the screen, a helpful message prompts you to start the test by pressing `'s'` (to enter the test) or exit by pressing `'q'`.
+In the top-right corner of the screen, a helpful message prompts you to start the test by pressing `'s'` (to start the test) or exit by pressing `'q'`.
 
 While the test is running, you'll be able to monitor the time remaining in the top-left corner of the screen.
 
@@ -46,7 +46,7 @@ To view the history of results in a bar chart you can run:
 ./donkeytype history
 ```
 
-<img width="1426" alt="picture demonstrating bar chart with history data" src="https://github.com/radlinskii/donkeytype/assets/26116041/352c68fc-28a3-4ea2-8800-d74b8d759ddd">
+<img width="1426" alt="picture demonstrating bar chart with history data" src="https://github.com/user-attachments/assets/c96c4311-8ab7-4874-bf98-35648c541a0c">
 
 To see all available options run:
 
