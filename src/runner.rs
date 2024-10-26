@@ -230,7 +230,7 @@ impl Runner {
 
         if self.show_help {
             let help_area = centered_rect(60, 60, frame.size());
-            self.help_window.render(frame.frame(), help_area);
+            self.help_window.render(frame, help_area);
         }
 
         let expected_input_str = self
