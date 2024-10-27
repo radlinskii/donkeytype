@@ -24,20 +24,6 @@ impl HelpWindow {
 
         let inner_area = block.inner(area);
 
-        let chunks = Layout::default()
-            .direction(Direction::Vertical)
-            .constraints([
-                Constraint::Length(1),
-                Constraint::Length(1),
-                Constraint::Length(1),
-                Constraint::Length(1),
-                Constraint::Length(1),
-                Constraint::Length(1),
-                Constraint::Length(1),
-                Constraint::Length(1),
-            ])
-            .split(inner_area);
-
         let help_text = vec![
             "Navigation:",
             "s - Start/unpause the test",
@@ -51,15 +37,21 @@ impl HelpWindow {
             "Run 'donkeytype help' for more options",
         ];
 
+        // Create constraints dynamically based on help_text length
+        let constraints = vec![Constraint::Length(1); help_text.len()];
+
+        let chunks = Layout::default()
+            .direction(Direction::Vertical)
+            .constraints(constraints)
+            .split(inner_area);
+
         // Render block
         frame.render_widget(block, area);
 
         // Render text paragraphs
         for (i, &text) in help_text.iter().enumerate() {
             let paragraph = Paragraph::new(text).style(Style::default().fg(Color::White));
-            if i < chunks.len() {
-                frame.render_widget(paragraph, chunks[i]);
-            }
+            frame.render_widget(paragraph, chunks[i]);
         }
     }
 }
