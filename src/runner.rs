@@ -137,6 +137,9 @@ impl Runner {
                         match self.input_mode {
                             InputMode::Normal => match key.code {
                                 KeyCode::Char('s') => {
+                                    // Hide help window if it's shown.
+                                    self.show_help = false;
+
                                     start_time = if self.is_started {
                                         start_time + pause_time.elapsed()
                                     } else {
