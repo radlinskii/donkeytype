@@ -14,6 +14,9 @@ impl HelpWindow {
     }
 
     pub fn render(&self, frame: &mut impl FrameWrapperInterface, area: Rect) {
+        // Clear the background area first.
+        frame.render_widget(Clear, area);
+
         let block = Block::default()
             .title("Help")
             .borders(Borders::ALL)
@@ -48,16 +51,15 @@ impl HelpWindow {
             "Run 'donkeytype help' for more options",
         ];
 
-        // Render Clear widget first
-        frame.render_widget(Clear, area);
-
         // Render block
         frame.render_widget(block, area);
 
         // Render text paragraphs
         for (i, &text) in help_text.iter().enumerate() {
             let paragraph = Paragraph::new(text).style(Style::default().fg(Color::White));
-            frame.render_widget(paragraph, chunks[i]);
+            if i < chunks.len() {
+                frame.render_widget(paragraph, chunks[i]);
+            }
         }
     }
 }
