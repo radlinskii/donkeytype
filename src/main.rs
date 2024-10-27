@@ -72,6 +72,7 @@ mod color_scheme;
 mod config;
 mod dictionary;
 mod expected_input;
+mod help_window;
 mod helpers;
 mod runner;
 mod test_results;
@@ -344,7 +345,8 @@ mod tests {
 
         let text = extract_text_from_buffer(terminal.backend().buffer());
 
-        let predicate = predicates::str::contains("press 's' to start the test, press 'q' to quit");
+        let predicate =
+            predicates::str::contains("press 's' to start the test, 'q' to quit, '?' for help");
 
         assert_eq!(true, predicate.eval(&text));
 

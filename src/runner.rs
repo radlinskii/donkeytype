@@ -16,6 +16,12 @@ use crossterm::event::{self, Event, KeyCode, KeyEventKind, KeyModifiers};
 use mockall::automock;
 use std::time::{Duration, Instant};
 
+use crate::config::Config;
+use crate::expected_input::ExpectedInputInterface;
+use crate::help_window::HelpWindow;
+use crate::helpers::split_by_char_index;
+use crate::test_results::{Stats, TestResults};
+use ratatui::widgets::Block;
 use ratatui::{
     backend::Backend,
     layout::{Alignment, Constraint, Direction, Layout, Rect},
@@ -24,11 +30,6 @@ use ratatui::{
     widgets::{Paragraph, Widget, Wrap},
     Frame, Terminal,
 };
-
-use crate::config::Config;
-use crate::expected_input::ExpectedInputInterface;
-use crate::helpers::split_by_char_index;
-use crate::test_results::{Stats, TestResults};
 
 /// To switch from Normal to Editing press `e`.
 /// To switch from Editing to Normal press `<Esc>`.
@@ -46,6 +47,8 @@ pub struct Runner {
     raw_mistakes_count: u64,
     raw_valid_characters_count: u64,
     is_started: bool,
+    show_help: bool,
+    help_window: HelpWindow,
 }
 
 impl Runner {
@@ -59,6 +62,8 @@ impl Runner {
             raw_mistakes_count: 0,
             raw_valid_characters_count: 0,
             is_started: false,
+            show_help: false,
+            help_window: HelpWindow::new(),
         }
     }
 
@@ -132,6 +137,9 @@ impl Runner {
                         match self.input_mode {
                             InputMode::Normal => match key.code {
                                 KeyCode::Char('s') => {
+                                    // Hide help window if it's shown.
+                                    self.show_help = false;
+
                                     start_time = if self.is_started {
                                         start_time + pause_time.elapsed()
                                     } else {
@@ -147,6 +155,9 @@ impl Runner {
                                         self.config.clone(),
                                         false,
                                     ));
+                                }
+                                KeyCode::Char('?') => {
+                                    self.show_help = !self.show_help;
                                 }
                                 _ => {}
                             },
@@ -208,6 +219,7 @@ impl Runner {
     /// info area - where help message and time remaining is rendered.
     /// and input area - where user input and expected input are displayed,
     pub fn render(&mut self, frame: &mut impl FrameWrapperInterface, time_left: u64) {
+        // Calculate base layout first.
         let areas = Layout::default()
             .direction(Direction::Vertical)
             .constraints([Constraint::Length(1), Constraint::Min(1)].as_ref())
@@ -220,6 +232,46 @@ impl Runner {
         let current_line_index = (input_chars_count / frame_width) as u16;
         let input_current_line_len = input_chars_count % frame_width;
 
+        // Render the main content first
+        self.render_main_content(
+            frame,
+            info_area,
+            input_area,
+            frame_width,
+            current_line_index,
+            input_current_line_len,
+            time_left,
+            input_chars_count,
+        );
+
+        // Then render help window on top if needed
+        if self.show_help {
+            // Create a clear overlay to dim the background
+            let full_area = frame.size();
+            frame.render_widget(
+                Paragraph::new("")
+                    .style(Style::default().bg(Color::Black).fg(Color::White))
+                    .block(Block::default()),
+                full_area,
+            );
+
+            // Render the help window in the center
+            let help_area = centered_rect(60, 60, frame.size());
+            self.help_window.render(frame, help_area);
+        }
+    }
+
+    fn render_main_content(
+        &mut self,
+        frame: &mut impl FrameWrapperInterface,
+        info_area: Rect,
+        input_area: Rect,
+        frame_width: usize,
+        current_line_index: u16,
+        input_current_line_len: usize,
+        time_left: u64,
+        input_chars_count: usize,
+    ) {
         let expected_input_str = self
             .expected_input
             .get_string((current_line_index as usize + 2) * frame_width);
@@ -289,10 +341,13 @@ impl Runner {
         );
 
         let help_message = match self.input_mode {
-            InputMode::Normal => match self.is_started {
-                false => "press 's' to start the test, press 'q' to quit",
-                true => "press 's' to unpause the test, press 'q' to quit",
-            },
+            InputMode::Normal => {
+                if self.is_started {
+                    "press 's' to unpause the test, 'q' to quit, '?' for help"
+                } else {
+                    "press 's' to start the test, 'q' to quit, '?' for help"
+                }
+            }
             InputMode::Editing => "press 'Esc' to pause the test",
         };
         self.print_block_of_text(
@@ -734,4 +789,24 @@ mod test {
 
         runner.move_cursor(&mut frame, area, input_current_line_len, current_line_index)
     }
+}
+
+fn centered_rect(percent_x: u16, percent_y: u16, r: Rect) -> Rect {
+    let popup_layout = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints([
+            Constraint::Percentage((100 - percent_y) / 2),
+            Constraint::Percentage(percent_y),
+            Constraint::Percentage((100 - percent_y) / 2),
+        ])
+        .split(r);
+
+    Layout::default()
+        .direction(Direction::Horizontal)
+        .constraints([
+            Constraint::Percentage((100 - percent_x) / 2),
+            Constraint::Percentage(percent_x),
+            Constraint::Percentage((100 - percent_x) / 2),
+        ])
+        .split(popup_layout[1])[1]
 }
