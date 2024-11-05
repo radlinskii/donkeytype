@@ -21,7 +21,6 @@ use crate::expected_input::ExpectedInputInterface;
 use crate::help_window::HelpWindow;
 use crate::helpers::split_by_char_index;
 use crate::test_results::{Stats, TestResults};
-use ratatui::widgets::Block;
 use ratatui::{
     backend::Backend,
     layout::{Alignment, Constraint, Direction, Layout, Rect},
@@ -153,7 +152,7 @@ impl Runner {
                                         self.input_mode = InputMode::Editing;
                                     }
                                     KeyCode::Char('q') => {
-                                        // todo return canceled test error and handle it in main
+                                        // TODO: return canceled test error and handle it in main
                                         return Ok(TestResults::new(
                                             Stats::default(),
                                             self.config.clone(),
@@ -251,17 +250,7 @@ impl Runner {
 
         // Then render help window on top if needed
         if self.show_help {
-            // Create a clear overlay to dim the background
-            let full_area = frame.size();
-            frame.render_widget(
-                Paragraph::new("")
-                    .style(Style::default().bg(Color::Black).fg(Color::DarkGray))
-                    .block(Block::default()),
-                full_area,
-            );
-
-            // Render the help window in the center
-            let _ = self.help_window.render(frame);
+            self.help_window.render(frame)
         }
     }
 
@@ -658,7 +647,7 @@ mod test {
             vec![
                 vec![
                     ("30 seconds left", Color::Yellow),
-                    ("      ", Color::Reset),
+                    ("    ", Color::Reset),
                     ("press '<Esc>' to pause the test", Color::Yellow),
                 ],
                 vec![
@@ -673,7 +662,8 @@ mod test {
         );
 
         test_runner(&mut runner, buffer, |frame, runner| {
-            runner.render(frame, 30);
+            let duration = 30;
+            runner.render(frame, duration);
         });
     }
 

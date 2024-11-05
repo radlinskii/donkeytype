@@ -1,6 +1,6 @@
-use anyhow::{Context, Result};
 use ratatui::{
     layout::{Constraint, Direction, Layout, Rect},
+    style::{Color, Style},
     widgets::{Block, Borders, Clear, Paragraph},
 };
 
@@ -13,14 +13,21 @@ impl HelpWindow {
         HelpWindow
     }
 
-    pub fn render(&self, frame: &mut impl FrameWrapperInterface) -> Result<()> {
+    pub fn render(&self, frame: &mut impl FrameWrapperInterface) {
+        let frame_rect = frame.size();
+
+        if frame_rect.height < 3 {
+            frame.render_widget(Clear, frame_rect);
+            return;
+        }
+
         let help_text = vec![
             "",
             " Navigation:",
-            " 's' - Start/resume the test",
+            " 's'   - Start/resume the test",
             " <Esc> - Pause the test",
-            " 'q' - Quit",
-            " '?' - Close this window",
+            " 'q'   - Quit",
+            " '?'   - Toggle this window",
             "",
             " Configuration:",
             " --duration <seconds> - Set test duration",
@@ -31,18 +38,48 @@ impl HelpWindow {
             "",
         ];
 
-        let longest_help_msg_len = help_text
-            .iter()
-            .map(|s| s.len())
-            .max()
-            .context("Unable to get the length of longest line from help window text")?;
+        let longest_help_msg_len = help_text.iter().map(|s| s.len()).max().unwrap();
         let help_text_lines_count = help_text.len();
 
-        let area = Self::centered_rect(
+        // check if there is enough space vertically to display the help message
+        if frame_rect.height <= help_text_lines_count as u16 {
+            let paragraph =
+                Paragraph::new( "Terminal window is too short to display the help window\nresize the terminal or press \"?\" to return to the test")
+                .style(Style::default().fg(Color::Red).bg(Color::Black));
+
+            frame.render_widget(Clear, frame_rect);
+            frame.render_widget(paragraph, frame_rect);
+
+            return;
+        }
+
+        // check if there is enough space horizontally to display the help message
+        if frame_rect.width - 2 <= longest_help_msg_len as u16 {
+            let paragraph = Paragraph::new(
+                "Terminal window is too narrow\nto display the help window\nresize the terminal\nor press the \"?\" key\nto return to the test",
+            )
+            .style(Style::default().fg(Color::Red).bg(Color::Black));
+
+            frame.render_widget(Clear, frame_rect);
+            frame.render_widget(paragraph, frame_rect);
+
+            return;
+        }
+
+        // Create a clear overlay to dim the background
+        frame.render_widget(
+            Paragraph::new("")
+                .style(Style::default().bg(Color::Black).fg(Color::DarkGray))
+                .block(Block::default()),
+            frame_rect,
+        );
+
+        let area = Self::get_centered_rect(
             longest_help_msg_len.try_into().unwrap(),
             help_text_lines_count.try_into().unwrap(),
             frame.size(),
         );
+
         // Clear the background area first.
         frame.render_widget(Clear, area);
 
@@ -58,7 +95,6 @@ impl HelpWindow {
             .constraints(constraints)
             .split(inner_area);
 
-        // Render block
         frame.render_widget(block, area);
 
         // Render text paragraphs
@@ -66,27 +102,14 @@ impl HelpWindow {
             let paragraph = Paragraph::new(text);
             frame.render_widget(paragraph, chunks[i]);
         }
-
-        Ok(())
     }
 
-    fn centered_rect(window_width: u16, window_height: u16, r: Rect) -> Rect {
-        let popup_layout = Layout::default()
-            .direction(Direction::Vertical)
-            .constraints([
-                Constraint::Length(0),
-                Constraint::Length(window_height + 2),
-                Constraint::Length(r.height - window_height - 2),
-            ])
-            .split(r);
+    fn get_centered_rect(window_width: u16, window_height: u16, r: Rect) -> Rect {
+        let x = r.x + (r.width.saturating_sub(window_width + 2)) / 2;
+        let y = if r.height > window_height + 4 { 3 } else { 0 };
 
-        Layout::default()
-            .direction(Direction::Horizontal)
-            .constraints([
-                Constraint::Length((r.width - window_width - 2) / 2),
-                Constraint::Length(window_width + 2),
-                Constraint::Length((r.width - window_width - 2) / 2),
-            ])
-            .split(popup_layout[1])[1]
+        Rect::new(x, y, window_width + 2, window_height + 1)
     }
 }
+
+// TODO: add tests
