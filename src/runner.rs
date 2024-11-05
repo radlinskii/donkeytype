@@ -21,7 +21,6 @@ use crate::expected_input::ExpectedInputInterface;
 use crate::help_window::HelpWindow;
 use crate::helpers::split_by_char_index;
 use crate::test_results::{Stats, TestResults};
-use ratatui::widgets::Block;
 use ratatui::{
     backend::Backend,
     layout::{Alignment, Constraint, Direction, Layout, Rect},
@@ -135,31 +134,36 @@ impl Runner {
                 if let Event::Key(key) = event::read().context("Unable to read event")? {
                     if key.kind == KeyEventKind::Press {
                         match self.input_mode {
-                            InputMode::Normal => match key.code {
-                                KeyCode::Char('s') => {
-                                    // Hide help window if it's shown.
-                                    self.show_help = false;
-
-                                    start_time = if self.is_started {
-                                        start_time + pause_time.elapsed()
-                                    } else {
-                                        Instant::now()
-                                    };
-                                    self.is_started = true;
-                                    self.input_mode = InputMode::Editing;
-                                }
-                                KeyCode::Char('q') => {
-                                    // todo return canceled test error and handle it in main
-                                    return Ok(TestResults::new(
-                                        Stats::default(),
-                                        self.config.clone(),
-                                        false,
-                                    ));
-                                }
-                                KeyCode::Char('?') => {
-                                    self.show_help = !self.show_help;
-                                }
-                                _ => {}
+                            InputMode::Normal => match self.show_help {
+                                true => match key.code {
+                                    KeyCode::Char('?') => {
+                                        self.show_help = false;
+                                    }
+                                    _ => {}
+                                },
+                                false => match key.code {
+                                    KeyCode::Char('s') => {
+                                        start_time = if self.is_started {
+                                            start_time + pause_time.elapsed()
+                                        } else {
+                                            Instant::now()
+                                        };
+                                        self.is_started = true;
+                                        self.input_mode = InputMode::Editing;
+                                    }
+                                    KeyCode::Char('q') => {
+                                        // TODO: return canceled test error and handle it in main
+                                        return Ok(TestResults::new(
+                                            Stats::default(),
+                                            self.config.clone(),
+                                            false,
+                                        ));
+                                    }
+                                    KeyCode::Char('?') => {
+                                        self.show_help = true;
+                                    }
+                                    _ => {}
+                                },
                             },
                             InputMode::Editing => match key.code {
                                 // Crossterm returns `ctrl+w` or ``ctrl+h` when `ctrl+backspace` is pressed
@@ -246,18 +250,7 @@ impl Runner {
 
         // Then render help window on top if needed
         if self.show_help {
-            // Create a clear overlay to dim the background
-            let full_area = frame.size();
-            frame.render_widget(
-                Paragraph::new("")
-                    .style(Style::default().bg(Color::Black).fg(Color::White))
-                    .block(Block::default()),
-                full_area,
-            );
-
-            // Render the help window in the center
-            let help_area = centered_rect(60, 60, frame.size());
-            self.help_window.render(frame, help_area);
+            self.help_window.render(frame)
         }
     }
 
@@ -343,12 +336,12 @@ impl Runner {
         let help_message = match self.input_mode {
             InputMode::Normal => {
                 if self.is_started {
-                    "press 's' to unpause the test, 'q' to quit, '?' for help"
+                    "press 's' to resume the test, 'q' to quit, '?' for help"
                 } else {
                     "press 's' to start the test, 'q' to quit, '?' for help"
                 }
             }
-            InputMode::Editing => "press 'Esc' to pause the test",
+            InputMode::Editing => "press '<Esc>' to pause the test",
         };
         self.print_block_of_text(
             frame,
@@ -654,8 +647,8 @@ mod test {
             vec![
                 vec![
                     ("30 seconds left", Color::Yellow),
-                    ("      ", Color::Reset),
-                    ("press 'Esc' to pause the test", Color::Yellow),
+                    ("    ", Color::Reset),
+                    ("press '<Esc>' to pause the test", Color::Yellow),
                 ],
                 vec![
                     ("foobar", Color::Green),
@@ -669,7 +662,8 @@ mod test {
         );
 
         test_runner(&mut runner, buffer, |frame, runner| {
-            runner.render(frame, 30);
+            let duration = 30;
+            runner.render(frame, duration);
         });
     }
 
@@ -789,24 +783,4 @@ mod test {
 
         runner.move_cursor(&mut frame, area, input_current_line_len, current_line_index)
     }
-}
-
-fn centered_rect(percent_x: u16, percent_y: u16, r: Rect) -> Rect {
-    let popup_layout = Layout::default()
-        .direction(Direction::Vertical)
-        .constraints([
-            Constraint::Percentage((100 - percent_y) / 2),
-            Constraint::Percentage(percent_y),
-            Constraint::Percentage((100 - percent_y) / 2),
-        ])
-        .split(r);
-
-    Layout::default()
-        .direction(Direction::Horizontal)
-        .constraints([
-            Constraint::Percentage((100 - percent_x) / 2),
-            Constraint::Percentage(percent_x),
-            Constraint::Percentage((100 - percent_x) / 2),
-        ])
-        .split(popup_layout[1])[1]
 }
