@@ -14,7 +14,7 @@ impl HelpWindow {
     }
 
     pub fn render(&self, frame: &mut impl FrameWrapperInterface) {
-        let frame_rect = frame.size();
+        let frame_rect = frame.area();
 
         if frame_rect.height < 3 {
             frame.render_widget(Clear, frame_rect);
@@ -77,7 +77,7 @@ impl HelpWindow {
         let area = Self::get_centered_rect(
             longest_help_msg_len.try_into().unwrap(),
             help_text_lines_count.try_into().unwrap(),
-            frame.size(),
+            frame.area(),
         );
 
         // Clear the background area first.

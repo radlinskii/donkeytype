@@ -216,7 +216,7 @@ mod tests {
 
     use anyhow::{Context, Result};
     use predicates::Predicate;
-    use ratatui::{backend::TestBackend, buffer::Buffer, Frame, Terminal};
+    use ratatui::{backend::TestBackend, buffer::Buffer, layout::Position, Frame, Terminal};
 
     use crate::{
         args::Args,
@@ -232,18 +232,22 @@ mod tests {
         Ok(terminal)
     }
 
-    fn extract_text_from_buffer(buffer: &Buffer) -> String {
+    fn extract_text_from_buffer(buffer: &Buffer) -> Result<String, anyhow::Error> {
         let mut text = String::new();
 
         for y in 0..buffer.area.height {
             for x in 0..buffer.area.height {
-                let cell = buffer.get(x, y);
-                text.push_str(&cell.symbol);
+                let cell = buffer.cell(Position { x, y });
+                text.push_str(
+                    &cell
+                        .context("Unable to get cell from the terminal buffer")?
+                        .symbol(),
+                );
             }
             text.push('\n');
         }
 
-        text
+        Ok(text)
     }
 
     fn setup_terminal(args: Args) -> Result<(Config, ExpectedInput, Terminal<TestBackend>)> {
@@ -299,13 +303,14 @@ mod tests {
         let mut app = Runner::new(config, expected_input);
 
         terminal
-            .draw(|f: &mut Frame<TestBackend>| {
+            .draw(|f: &mut Frame| {
                 let mut frame_wrapper = FrameWrapper::new(f);
                 app.render(&mut frame_wrapper, time_left.as_secs());
             })
             .context("Unable to draw in terminal")?;
 
-        let text = extract_text_from_buffer(terminal.backend().buffer());
+        let text = extract_text_from_buffer(terminal.backend().buffer())
+            .context("Unable to extract text from buffer")?;
 
         let predicate = predicates::str::contains("hello world");
 
@@ -337,13 +342,14 @@ mod tests {
         let start_time = Instant::now();
 
         terminal
-            .draw(|f: &mut Frame<TestBackend>| {
+            .draw(|f: &mut Frame| {
                 let mut frame_wrapper = FrameWrapper::new(f);
                 app.render(&mut frame_wrapper, start_time.elapsed().as_secs());
             })
             .context("Unable to draw in terminal")?;
 
-        let text = extract_text_from_buffer(terminal.backend().buffer());
+        let text = extract_text_from_buffer(terminal.backend().buffer())
+            .context("Unable to extract text from buffer")?;
 
         let predicate =
             predicates::str::contains("press 's' to start the test, 'q' to quit, '?' for help");
