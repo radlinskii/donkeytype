@@ -14,6 +14,8 @@
 use anyhow::{Context, Result};
 use crossterm::event::{self, Event, KeyCode, KeyEventKind, KeyModifiers};
 use mockall::automock;
+use ratatui::layout::Position;
+use ratatui::text::Text;
 use std::time::{Duration, Instant};
 
 use crate::config::Config;
@@ -25,7 +27,6 @@ use ratatui::{
     backend::Backend,
     layout::{Alignment, Constraint, Direction, Layout, Rect},
     style::{Color, Style},
-    text::Text,
     widgets::{Paragraph, Widget, Wrap},
     Frame, Terminal,
 };
@@ -120,7 +121,7 @@ impl Runner {
             };
 
             terminal
-                .draw(|f: &mut Frame<B>| {
+                .draw(|f: &mut Frame| {
                     let mut frame_wrapper = FrameWrapper::new(f);
                     self.render(&mut frame_wrapper, time_left.as_secs());
                 })
@@ -227,25 +228,20 @@ impl Runner {
         let areas = Layout::default()
             .direction(Direction::Vertical)
             .constraints([Constraint::Length(1), Constraint::Min(1)].as_ref())
-            .split(frame.size());
+            .split(frame.area());
         let info_area = areas[0];
         let input_area = areas[1];
 
-        let frame_width: usize = frame.size().width as usize;
-        let input_chars_count: usize = self.input.chars().count();
-        let current_line_index = (input_chars_count / frame_width) as u16;
-        let input_current_line_len = input_chars_count % frame_width;
+        self.render_info_area(time_left, frame, info_area);
 
-        // Render the main content first
-        self.render_main_content(
+        let (current_line_index, input_current_line_len) =
+            self.render_expected_input_area(frame, input_area);
+
+        self.move_cursor(
             frame,
-            info_area,
             input_area,
-            frame_width,
-            current_line_index,
             input_current_line_len,
-            time_left,
-            input_chars_count,
+            current_line_index,
         );
 
         // Then render help window on top if needed
@@ -254,17 +250,16 @@ impl Runner {
         }
     }
 
-    fn render_main_content(
+    fn render_expected_input_area(
         &mut self,
         frame: &mut impl FrameWrapperInterface,
-        info_area: Rect,
         input_area: Rect,
-        frame_width: usize,
-        current_line_index: u16,
-        input_current_line_len: usize,
-        time_left: u64,
-        input_chars_count: usize,
-    ) {
+    ) -> (u16, usize) {
+        let frame_width: usize = frame.area().width as usize;
+        let input_chars_count: usize = self.input.chars().count();
+        let current_line_index = (input_chars_count / frame_width) as u16;
+        let input_current_line_len = input_chars_count % frame_width;
+
         let expected_input_str = self
             .expected_input
             .get_string((current_line_index as usize + 2) * frame_width);
@@ -310,14 +305,15 @@ impl Runner {
             true,
             false,
         );
+        (current_line_index, input_current_line_len)
+    }
 
-        self.move_cursor(
-            frame,
-            input_area,
-            input_current_line_len,
-            current_line_index,
-        );
-
+    fn render_info_area(
+        &mut self,
+        time_left: u64,
+        frame: &mut impl FrameWrapperInterface,
+        info_area: Rect,
+    ) {
         let label = match time_left {
             1 => "second",
             _ => "seconds",
@@ -350,7 +346,7 @@ impl Runner {
             Color::Yellow,
             true,
             true,
-        )
+        );
     }
 
     /// Iterate over characters in user input
@@ -397,8 +393,7 @@ impl Runner {
         wrap: bool,
         align_right: bool,
     ) {
-        let mut text = Text::from(text_str);
-        text.patch_style(Style::default().fg(color));
+        let text = Text::styled(text_str, Style::default().fg(color));
         let mut paragraph = Paragraph::new(text);
 
         if wrap {
@@ -501,31 +496,31 @@ impl Runner {
 pub trait FrameWrapperInterface {
     fn render_widget<W: Widget + 'static>(&mut self, widget: W, area: Rect);
     fn set_cursor(&mut self, x: u16, y: u16);
-    fn size(&self) -> Rect;
+    fn area(&self) -> Rect;
 }
 
 /// Used for generating mocks using `mockall` crate
-pub struct FrameWrapper<'a, 'b, B: Backend> {
-    frame: &'a mut Frame<'b, B>,
+pub struct FrameWrapper<'a, 'b> {
+    frame: &'a mut Frame<'b>,
 }
 
-impl<'a, 'b, B: Backend> FrameWrapper<'a, 'b, B> {
-    pub fn new(frame: &'a mut Frame<'b, B>) -> Self {
+impl<'a, 'b> FrameWrapper<'a, 'b> {
+    pub fn new(frame: &'a mut Frame<'b>) -> Self {
         FrameWrapper { frame }
     }
 }
 
-impl<'a, 'b, B: Backend> FrameWrapperInterface for FrameWrapper<'a, 'b, B> {
+impl<'a, 'b> FrameWrapperInterface for FrameWrapper<'a, 'b> {
     fn render_widget<T: Widget + 'static>(&mut self, widget: T, area: Rect) {
         self.frame.render_widget(widget, area);
     }
 
     fn set_cursor(&mut self, x: u16, y: u16) {
-        self.frame.set_cursor(x, y);
+        self.frame.set_cursor_position(Position { x, y });
     }
 
-    fn size(&self) -> Rect {
-        self.frame.size()
+    fn area(&self) -> Rect {
+        self.frame.area()
     }
 }
 
@@ -559,7 +554,7 @@ mod test {
     fn test_runner(
         runner: &mut Runner,
         expected: Buffer,
-        callback: fn(frame: &mut FrameWrapper<'_, '_, TestBackend>, runner: &mut Runner) -> (),
+        callback: fn(frame: &mut FrameWrapper<'_, '_>, runner: &mut Runner) -> (),
     ) {
         let backend = TestBackend::new(expected.area.width, expected.area.height);
         let mut terminal = Terminal::new(backend).unwrap();
@@ -606,7 +601,7 @@ mod test {
 
         let mut frame = MockFrameWrapperInterface::default();
 
-        frame.expect_size().times(2).return_const(Rect {
+        frame.expect_area().times(2).return_const(Rect {
             x: 39,
             y: 1,
             width: 50,

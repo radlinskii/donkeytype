@@ -185,7 +185,7 @@ impl TestResults {
                         ]
                         .as_ref(),
                     )
-                    .split(frame.size());
+                    .split(frame.area());
 
                 frame.render_widget(Paragraph::new("Test completed"), areas[0]);
                 frame.render_widget(
@@ -306,7 +306,7 @@ pub fn render_results<B: Backend>(
                     ]
                     .as_ref(),
                 )
-                .split(frame.size());
+                .split(frame.area());
 
             frame.render_widget(
                 Paragraph::new("Press 'q' to quit")
@@ -347,7 +347,7 @@ fn render_chart(
 ) {
     let mut results_to_render = results.clone();
     let bar_width = 5;
-    let frame_width = frame.size().width;
+    let frame_width = frame.area().width;
     let bars_to_show = ((frame_width + 1) / (bar_width + 1)) as usize;
     if results.len() >= bars_to_show {
         results_to_render = results[results.len() - bars_to_show..].to_vec();
